@@ -1,0 +1,1981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Designers vs. AI - A Ben Roberts Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background-color: #0c0a18;
+            color: #ffffff;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #game-container {
+            width: 95vw;
+            height: calc(95vw * 9 / 16); /* Maintain 16:9 aspect ratio */
+            max-height: 95vh;
+            max-width: calc(95vh * 16 / 9);
+            border: 4px solid #4a0b48;
+            border-radius: 12px;
+            overflow: hidden;
+            background-color: #1a142d;
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.4);
+            position: relative;
+            cursor: default; /* Keep cursor visible */
+        }
+        canvas#game-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        #ui-scaler {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 1280px; /* Internal resolution */
+            height: 720px; /* Internal resolution */
+            transform-origin: top left;
+            pointer-events: none; /* Pass clicks through to canvas */
+        }
+        #ui-scaler > * {
+            pointer-events: auto; /* Re-enable pointer events for children */
+        }
+        #drawing-paper-container {
+            position: absolute;
+            top: 170px; /* Moved below windows */
+            left: 10px;
+            width: 150px;
+            height: 150px;
+        }
+        #drawing-paper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f0f0f0;
+            border: 2px solid #4a0b48;
+            cursor: crosshair;
+            box-shadow: 0 0 15px rgba(255, 0, 255, 0.4);
+            z-index: 10;
+        }
+        .paper-stack {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: #ddd;
+            border: 2px solid #4a0b48;
+        }
+        #stack-2 { top: 6px; left: 6px; z-index: 9; } /* Increased offset */
+        #stack-3 { top: 12px; left: 12px; z-index: 8; } /* Increased offset */
+
+        #trash-icon {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            z-index: 12;
+            transition: transform 0.1s ease-in-out;
+        }
+        #trash-icon svg {
+            width: 100%;
+            height: 100%;
+            stroke: #aaaaaa;
+            fill: rgba(255,255,255,0.01); /* Makes the whole shape clickable */
+            transition: stroke 0.2s ease-in-out;
+            image-rendering: pixelated;
+        }
+        #trash-icon:hover {
+            transform: scale(1.1);
+        }
+        #trash-icon:hover svg {
+            stroke: #ff4141;
+        }
+
+        #pencil-container {
+            position: absolute;
+            top: 325px;
+            left: 15px;
+            display: flex;
+            gap: 10px;
+            z-index: 11;
+        }
+        .pencil {
+            width: 40px;
+            height: 60px;
+            cursor: pointer;
+            transition: transform 0.15s ease-in-out;
+            position: relative;
+            filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.4));
+        }
+        .pencil-body {
+            width: 100%;
+            height: 100%;
+            border-radius: 5px 5px 0 0;
+            border: 3px solid #222;
+        }
+        .pencil-tip {
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 17px solid transparent;
+            border-right: 17px solid transparent;
+            border-top: 15px solid #ffdd99; /* Wood color */
+        }
+        .pencil-lead {
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 7px solid; /* Color will be set by JS */
+        }
+        #pencil-cyan .pencil-body { background: linear-gradient(to right, #00ffff 50%, #00cccc 50%); }
+        #pencil-cyan .pencil-lead { border-top-color: #00ffff; }
+        #pencil-magenta .pencil-body { background: linear-gradient(to right, #ff00ff 50%, #cc00cc 50%); }
+        #pencil-magenta .pencil-lead { border-top-color: #ff00ff; }
+        #pencil-yellow .pencil-body { background: linear-gradient(to right, #ffc300 50%, #d9a600 50%); }
+        #pencil-yellow .pencil-lead { border-top-color: #ffc300; }
+        .pencil.selected {
+            transform: translateY(-15px);
+        }
+        .pencil:hover:not(.selected) {
+            transform: translateY(-5px);
+        }
+        .pencil:hover:not(.selected) .pencil-body {
+            box-shadow: 0 0 10px #fff;
+        }
+
+
+        #ui-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            text-align: right;
+            font-size: 16px;
+            color: #00ffcc;
+            text-shadow: 0 0 5px #00ffcc, 0 0 10px #00ffcc;
+        }
+        .game-message {
+            position: absolute;
+            background-color: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 5px;
+            border: 2px solid #00ffcc;
+            color: #00ffcc;
+            text-shadow: 0 0 5px #00ffcc;
+            font-size: 16px;
+            text-align: center;
+            display: none;
+            z-index: 100;
+        }
+        #instruction-message, #restock-message, #windy-message, #special-request-message {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        #draw-here-message {
+            top: 230px;
+            left: 170px;
+            padding: 10px;
+        }
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #0c0a18;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: #fff;
+            text-shadow: 0 0 10px #00ffcc; /* Updated glow */
+            z-index: 200;
+            cursor: pointer;
+        }
+        #start-screen h1 {
+            font-size: 32px;
+            background: linear-gradient(to bottom, #fde179, #ff7c9b);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 10px rgba(255, 124, 155, 0.5);
+            margin-bottom: 20px;
+        }
+        #start-screen-leaderboard {
+            font-size: 14px;
+            color: #00ffcc;
+            border: 2px solid #00ffcc;
+            padding: 10px 20px;
+            margin-bottom: 30px;
+            background: rgba(0,0,0,0.5);
+            width: 350px;
+            text-align: center;
+        }
+        #start-screen-leaderboard h3 {
+            margin-bottom: 10px;
+            text-decoration: underline;
+        }
+        #game-over-wrapper {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            z-index: 101;
+            background: rgba(0,0,0,0.7);
+        }
+        #message-box, #leaderboard-container {
+            background-color: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 80%;
+            flex-shrink: 0;
+        }
+        #message-box {
+            color: #ff4141;
+            border: 2px solid #ff4141;
+            font-size: 24px;
+            width: 650px; /* Increased width */
+        }
+        #leaderboard-container {
+            color: #00ffcc;
+            border: 2px solid #00ffcc;
+            font-size: 18px;
+            width: 350px;
+        }
+        .leaderboard-ol {
+            list-style: none;
+            padding-left: 20px;
+            margin: 0;
+            counter-reset: leaderboard-counter;
+            width: 100%;
+        }
+        .leaderboard-ol li {
+            counter-increment: leaderboard-counter;
+            display: grid;
+            grid-template-columns: 2.5em 1fr;
+            gap: 1em;
+            align-items: baseline;
+            margin-bottom: 8px;
+            text-align: left;
+        }
+        .leaderboard-ol li::before {
+            content: counter(leaderboard-counter) ".";
+            text-align: right;
+        }
+        .leaderboard-ol li.highlight {
+            color: #ffff00;
+            font-weight: bold;
+        }
+        .leaderboard-ol li.highlight::before {
+            color: #ffff00;
+        }
+        #portfolio-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #111;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #portfolio-container h3, #leaderboard-container h3 {
+            font-size: 18px;
+            color: #00ffcc;
+            margin-bottom: 5px;
+            width: 100%;
+        }
+        #portfolio-images {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            overflow-y: hidden;
+            max-height: 230px;
+            padding-bottom: 10px; /* Add padding for medals */
+        }
+        .portfolio-item {
+            position: relative;
+            width: 64px;
+            height: 64px;
+            cursor: pointer;
+        }
+        .portfolio-item img {
+            width: 100%;
+            height: 100%;
+            border: 2px solid #4a0b48;
+            border-radius: 4px;
+        }
+        .download-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 32px;
+            height: 32px;
+            background-color: rgba(0,0,0,0.6);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+            image-rendering: pixelated; /* For crisp pixel art */
+        }
+        .portfolio-item:hover .download-icon {
+            opacity: 1;
+        }
+        .medal-icon {
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            width: 24px;
+            height: 24px;
+            display: none; /* Hidden by default */
+        }
+
+        #message-box button, #highscore-input-container button {
+            background-color: #ff4141;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 16px;
+        }
+        #highscore-input-container { color: #00ffcc; }
+        #initials-input {
+            background: #222;
+            border: 2px solid #00ffcc;
+            color: #00ffcc;
+            text-align: center;
+            font-family: 'Press Start 2P', cursive;
+            text-transform: uppercase;
+            width: 100px;
+            margin: 10px auto;
+        }
+        #mute-button {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            width: 40px;
+            height: 40px;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid #00ffcc;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="game-canvas"></canvas>
+    <div id="ui-scaler">
+        <div id="drawing-paper-container">
+            <div id="stack-3" class="paper-stack"></div>
+            <div id="stack-2" class="paper-stack"></div>
+            <canvas id="drawing-paper" width="150" height="150"></canvas>
+            <div id="trash-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 6h16"/>
+                    <path d="M10 6V4h4v2"/>
+                    <path d="M6 6v14c0 1 1 2 2 2h8c1 0 2-1 2-2V6"/>
+                    <path d="M10 11v6M14 11v6"/>
+                </svg>
+            </div>
+        </div>
+        <div id="pencil-container">
+            <div class="pencil" id="pencil-cyan">
+                <div class="pencil-body"></div><div class="pencil-tip"></div><div class="pencil-lead"></div>
+            </div>
+            <div class="pencil" id="pencil-magenta">
+                <div class="pencil-body"></div><div class="pencil-tip"></div><div class="pencil-lead"></div>
+            </div>
+            <div class="pencil" id="pencil-yellow">
+                <div class="pencil-body"></div><div class="pencil-tip"></div><div class="pencil-lead"></div>
+            </div>
+        </div>
+        <div id="ui-container">
+            <div id="top-score">HI-SCORE: 000 ---</div>
+            <div id="score">Score: 0</div>
+        </div>
+        <div id="instruction-message" class="game-message">Move with A & D<br>Press SPACE to drop your design</div>
+        <div id="draw-here-message" class="game-message">&lt;-- DRAW HERE</div>
+        <div id="restock-message" class="game-message">Restock paper!</div>
+        <div id="windy-message" class="game-message">It's getting windy!</div>
+        <div id="special-request-message" class="game-message">Fulfil special requests<br>for bonus points!</div>
+        <div id="copied-message" class="game-message" style="border-color: #ffff00; color: #ffff00;">Image Saved!</div>
+        <div id="game-over-wrapper">
+            <div id="message-box">
+                <div id="message-text">GAME OVER</div>
+                <div id="highscore-input-container" style="display: none;">
+                    <h3>Enter Your Initials:</h3>
+                    <input type="text" id="initials-input" maxlength="3" placeholder="AAA">
+                    <button id="submit-score-button">Submit</button>
+                </div>
+                <div id="portfolio-container" style="display: none;">
+                        <h3>Your Portfolio:</h3>
+                        <div id="portfolio-images"></div>
+                </div>
+                <button id="restart-button">Restart</button>
+            </div>
+            <div id="leaderboard-container" style="display: none;">
+                    <h3>HI-SCORES</h3>
+                    <ol id="leaderboard-list" class="leaderboard-ol"></ol>
+            </div>
+        </div>
+        <div id="start-screen">
+            <h1>DESIGNERS vs. AI</h1>
+            <div id="start-screen-leaderboard">
+                <h3>HI-SCORES</h3>
+                <ol id="start-screen-list" class="leaderboard-ol"><li>Loading...</li></ol>
+            </div>
+            <span>Click to Start</span>
+        </div>
+        <div id="mute-button">
+            <svg id="sound-on-icon" width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path></svg>
+            <svg id="sound-off-icon" width="24" height="24" viewBox="0 0 24 24" fill="white" style="display: none;"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"></path></svg>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    // --- Firebase Imports ---
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, onSnapshot, collection, query, orderBy, limit, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // --- Canvas and Context Setup ---
+    const gameCanvas = document.getElementById('game-canvas');
+    const gameCtx = gameCanvas.getContext('2d');
+    const drawingCanvas = document.getElementById('drawing-paper');
+    const drawingCtx = drawingCanvas.getContext('2d');
+    
+    const internalCanvas = document.createElement('canvas');
+    const internalCtx = internalCanvas.getContext('2d');
+    const INTERNAL_WIDTH = 1280;
+    const INTERNAL_HEIGHT = 720;
+    internalCanvas.width = INTERNAL_WIDTH;
+    internalCanvas.height = INTERNAL_HEIGHT;
+
+    const scoreEl = document.getElementById('score');
+    const topScoreEl = document.getElementById('top-score');
+    const messageBox = document.getElementById('message-box');
+    const messageTextEl = document.getElementById('message-text');
+    const restartButton = document.getElementById('restart-button');
+    const gameContainer = document.getElementById('game-container');
+    const portfolioContainer = document.getElementById('portfolio-container');
+    const portfolioImagesContainer = document.getElementById('portfolio-images');
+    const stack2El = document.getElementById('stack-2');
+    const stack3El = document.getElementById('stack-3');
+    const instructionMessageEl = document.getElementById('instruction-message');
+    const restockMessageEl = document.getElementById('restock-message');
+    const copiedMessageEl = document.getElementById('copied-message');
+    const highscoreInputContainer = document.getElementById('highscore-input-container');
+    const initialsInput = document.getElementById('initials-input');
+    const submitScoreButton = document.getElementById('submit-score-button');
+    const startScreen = document.getElementById('start-screen');
+    const startScreenListEl = document.getElementById('start-screen-list');
+    const muteButton = document.getElementById('mute-button');
+    const soundOnIcon = document.getElementById('sound-on-icon');
+    const soundOffIcon = document.getElementById('sound-off-icon');
+    const leaderboardContainer = document.getElementById('leaderboard-container');
+    const leaderboardList = document.getElementById('leaderboard-list');
+    const gameOverWrapper = document.getElementById('game-over-wrapper');
+    const uiScaler = document.getElementById('ui-scaler');
+    const drawHereMessageEl = document.getElementById('draw-here-message');
+    const pencilContainer = document.getElementById('pencil-container');
+    const pencilButtons = document.querySelectorAll('.pencil');
+    const windyMessageEl = document.getElementById('windy-message');
+    const specialRequestMessageEl = document.getElementById('special-request-message');
+    const trashIcon = document.getElementById('trash-icon');
+
+    // --- Firebase Setup ---
+    let db, auth, scoresCollectionRef;
+    const appId = 'designers-vs-ai-game';
+    const firebaseConfig = {
+      apiKey: "AIzaSyBglciCKGBvNki8z3Ln6RwRTw4JqGRpeiA",
+      authDomain: "designers-vs-ai-game.firebaseapp.com",
+      projectId: "designers-vs-ai-game",
+      storageBucket: "designers-vs-ai-game.appspot.com",
+      messagingSenderId: "503158591070",
+      appId: "1:503158591070:web:145b1e4eb8c63036726ecf"
+    };
+
+    async function setupFirebase() {
+        if (!firebaseConfig.apiKey) {
+            console.log("Firebase config not found. High scores will be local.");
+            startScreenListEl.innerHTML = '<li>Local Mode</li>';
+            return;
+        }
+        try {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            
+            await signInAnonymously(auth);
+
+            scoresCollectionRef = collection(db, `artifacts/${appId}/public/data/scores`);
+
+            const q = query(scoresCollectionRef, orderBy("score", "desc"), limit(10));
+            onSnapshot(q, (querySnapshot) => {
+                startScreenListEl.innerHTML = ''; // Clear previous list
+                if (!querySnapshot.empty) {
+                    const topDoc = querySnapshot.docs[0].data();
+                    topScore = topDoc.score;
+                    topScoreName = topDoc.name;
+                    
+                    querySnapshot.forEach(doc => {
+                        const data = doc.data();
+                        const li = document.createElement('li');
+                        li.textContent = `${data.name}: ${data.score}`;
+                        startScreenListEl.appendChild(li);
+                    });
+                } else {
+                    topScore = 0;
+                    topScoreName = 'AI';
+                    startScreenListEl.innerHTML = '<li>No scores yet!</li>';
+                }
+                updateUI();
+            }, (error) => {
+                console.error("Error with snapshot listener:", error);
+                startScreenListEl.innerHTML = '<li>Error loading scores</li>';
+            });
+
+        } catch (error) {
+            console.error("Error initializing Firebase:", error);
+            startScreenListEl.innerHTML = '<li>Error loading scores</li>';
+        }
+    }
+
+
+    // --- Sound Engine ---
+    const reverb = new Tone.Freeverb(0.7, 3000).toDestination();
+    const sound = {
+        isStarted: false,
+        drop: new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.1 } }).toDestination(),
+        success: new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.1 } }).toDestination(),
+        fail: new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.1 } }).toDestination(),
+        noDrop: new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.02, decay: 0.2, sustain: 0, release: 0.1 } }).toDestination(),
+        restock: new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.01, decay: 0.15, sustain: 0, release: 0.1 } }).toDestination(),
+        outOfPaper: new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination(),
+        footstep: new Tone.MembraneSynth({ pitchDecay: 0.01, octaves: 2, envelope: { attack: 0.001, decay: 0.1, sustain: 0 } }).toDestination(),
+        rain: new Tone.Noise({ type: 'pink', playbackRate: 0.2 }).toDestination(),
+        gameOver: new Tone.Synth({ oscillator: { type: 'fatsawtooth', count: 3, spread: 30 }, envelope: { attack: 0.01, decay: 1, sustain: 0.1, release: 0.5 } }).toDestination(),
+        breach: new Tone.Synth({ oscillator: { type: 'sawtooth' }, envelope: { attack: 0.01, decay: 0.5, sustain: 0.2, release: 0.2 } }).toDestination(),
+        trash: new Tone.NoiseSynth({ noise: { type: 'brown' }, envelope: { attack: 0.01, decay: 0.1, sustain: 0 } }).toDestination(),
+        specialRequest: new Tone.PluckSynth().connect(reverb),
+        music: new Tone.MonoSynth({
+            oscillator: { type: "sawtooth" },
+            envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 1 },
+            filterEnvelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 1, baseFrequency: 200, octaves: 4 }
+        }).toDestination()
+    };
+    sound.rain.volume.value = -25;
+    sound.music.volume.value = -18;
+    sound.breach.volume.value = -10;
+    sound.noDrop.volume.value = -15;
+    sound.specialRequest.volume.value = -10;
+    let musicLoop;
+    let lastFootstepTime = 0;
+
+    // --- Game State and Configuration ---
+    let designer, projectiles, ai;
+    let clients = [], raindrops = [], windows = [], successfulDesigns = [], vfxParticles = [], paperVFX = [];
+    let score = 0, topScore = 0, topScoreName = 'AI';
+    let isGameOver = false;
+    let keys = {}, isDrawing = false;
+    let lastPoint, lastSpawnTime = 0, parallaxOffset = 0, gameTime = 0;
+    let paperCount = 3;
+    let hasShownFirstRestockMessage = false;
+    let hasShownSpecialRequestMessage = false;
+    let lastSubmittedScoreTimestamp = null;
+    let totalClientsSpawned = 0;
+    let windStrength = 0;
+    let successfulDeliveries = 0;
+    let windStartTime = null;
+    let currentInkColorIndex = 0;
+    let usedColorsInCurrentDrawing = new Set();
+    let colorStreak = { 0: 0, 2: 0, 3: 0 };
+
+    const inkColors = ['#00ffff', '#20c2a8', '#ff00ff', '#ffc300', '#ff7f50', '#0000ff', '#00ff00']; // Updated yellow
+    const pencilColors = { // Map pencil elements to main color array indices
+        'pencil-cyan': 0,
+        'pencil-magenta': 2,
+        'pencil-yellow': 3
+    };
+    
+    // --- DIALOGUE DATA ---
+    const specialRequestTypes = [
+        { type: 'color', detail: '#00ffff', text: 'I want cyan!' },
+        { type: 'color', detail: '#ff00ff', text: 'I want magenta!' },
+        { type: 'color', detail: '#ffc300', text: 'I want yellow!' },
+        { type: 'color_count', detail: 1, text: 'Just 1 colour please' },
+        { type: 'color_count', detail: 2, text: "I'd like any 2 colours" },
+        { type: 'color_count', detail: 3, text: 'I need all 3 colours!' },
+        { type: 'density', detail: 'dense', text: 'Make it detailed' },
+        { type: 'density', detail: 'minimal', text: 'Make it minimal' },
+        { type: 'color_combo', detail: [2, 0], text: 'Magenta and cyan please' },
+        { type: 'color_combo', detail: [0, 3], text: 'Cyan and yellow please' },
+        { type: 'color_combo', detail: [3, 2], text: 'Yellow and magenta please' },
+        { type: 'impossible', detail: 'horizon_green', text: "I want it 'Horizon Green'" },
+        { type: 'zone', detail: 'left_empty', text: 'Keep the left side empty' },
+        { type: 'zone', detail: 'right_empty', text: 'Keep the right side empty' },
+        { type: 'zone', detail: 'top_empty', text: 'Keep the top half empty' },
+        { type: 'zone', detail: 'bottom_empty', text: 'Keep the bottom half empty' },
+    ];
+
+    const windowColors = ['rgba(255, 105, 180, 0.5)', 'rgba(0, 255, 255, 0.5)', 'rgba(255, 165, 0, 0.5)', 'rgba(128, 0, 128, 0.5)'];
+    
+    const clientQuotes = [
+        "Make it pop!", "I'll know it when I see it.", "Make the logo bigger.", "I need something viral.",
+        "I want something... edgy.", "Think outside the box.", "Give it some sizzle.", "It needs a strong narrative.",
+        "We need something disruptive.", "Let's leverage our assets.", "I need something with brand appeal.",
+        "We need a game-changer.", "It must be user-centric.", "Give it that je ne sais quoi.",
+        "Can we try something in 3D?", "It needs to feel premium", "I want something that sings",
+        "Can we evoke innovation?", "I need timeless... but trending.", "I want Apple, but not Apple.",
+        "Give it some wow factor.", "It should work for all audiences.", "Stand out, but in a subtle way.",
+        "Synergy, synergy, synergy!"
+    ];
+    
+    const offBriefQuotes = [
+        "Not what I asked for, but okay.", "It'll do, I suppose.", "Hmm, not quite right.", "Fine I guess.",
+        "The worst thing I've ever seen. Approved.", "Don't worry about the brief then...", "Did you not get my email?",
+        "I'll pay you half.", "Was I not clear?"
+    ];
+
+    const blankPageQuotes = [
+        "Rubbish!", "Can you recommend another agency?", "This is empty!", "What's this?",
+        "Am I missing something?", "Nonsense.", "You suck!"
+    ];
+    
+    let availableQuotes = [];
+    
+    const investigationQuotes = ["Hmm...", "How does this work?", "Interesting...", "What's this?"];
+    
+    const positiveQuotes = [
+        "Perfect!", "Love it!", "That's the one!", "Genius!", "Nailed it!", "Approved!", "Thanks!",
+        "Just what I wanted!", "You're great!", "Take my money!"
+    ];
+
+    const DESIGNER_WIDTH = 50, DESIGNER_HEIGHT = 60;
+    const CLIENT_WIDTH = 40, CLIENT_HEIGHT = 70;
+    const AI_WIDTH = 80, AI_HEIGHT = 120;
+    const PROJECTILE_SPEED = 7, BUILDING_HEIGHT = 150;
+    const MS_PER_FRAME = 16.67; // Approx ms for 60fps
+    
+    // --- Text-to-Speech ---
+    const synth = window.speechSynthesis;
+    let maleVoices = [];
+    let femaleVoices = [];
+    let speechQueue = [];
+    let clientVoiceCounter = 0;
+
+    function loadVoices() {
+        const allVoices = synth.getVoices();
+        maleVoices = allVoices.filter(voice => voice.name.includes('Male') || voice.gender === 'male');
+        femaleVoices = allVoices.filter(voice => voice.name.includes('Female') || voice.gender === 'female');
+        // Fallback if no gendered voices are found
+        if (maleVoices.length === 0) maleVoices = allVoices.filter(voice => voice.lang.startsWith('en-'));
+        if (femaleVoices.length === 0) femaleVoices = allVoices.reverse().filter(voice => voice.lang.startsWith('en-'));
+    }
+
+    // This is needed because getVoices() is often async
+    if (synth.onvoiceschanged !== undefined) {
+        synth.onvoiceschanged = loadVoices;
+    }
+    loadVoices(); // Initial attempt
+
+    function processSpeechQueue() {
+        if (isGameOver || synth.speaking || speechQueue.length === 0 || Tone.Master.mute) {
+            return;
+        }
+        const utterance = speechQueue.shift();
+        utterance.onend = () => {
+            setTimeout(processSpeechQueue, 100); // Small delay between speeches
+        };
+        synth.speak(utterance);
+    }
+
+    function speak(text, pitch = 1, rate = 1, voice = null, immediate = false) {
+        if (isGameOver || Tone.Master.mute) return;
+
+        const utterThis = new SpeechSynthesisUtterance(text);
+        utterThis.pitch = pitch;
+        utterThis.rate = rate;
+        if (voice) {
+            utterThis.voice = voice;
+        }
+
+        if (immediate) {
+            synth.cancel();
+            speechQueue = [utterThis];
+            processSpeechQueue();
+        } else {
+            speechQueue.push(utterThis);
+            if (!synth.speaking) {
+                processSpeechQueue();
+            }
+        }
+    }
+
+    // --- Game Object Classes ---
+
+    class Designer {
+        constructor(x, y) {
+            this.x = x; this.y = y; this.width = DESIGNER_WIDTH; this.height = DESIGNER_HEIGHT; this.speed = 7;
+            this.idleBob = 0;
+        }
+        update(time) {
+            const oldX = this.x;
+            if (keys['a'] || keys['A'] || keys['d'] || keys['D']) {
+                if (keys['a'] || keys['A']) this.x -= this.speed;
+                if (keys['d'] || keys['D']) this.x += this.speed;
+                if (time - lastFootstepTime > 150) {
+                    if(sound.isStarted) sound.footstep.triggerAttackRelease("C2", "32n");
+                    lastFootstepTime = time;
+                }
+            }
+            this.x = Math.max(0, Math.min(INTERNAL_WIDTH - this.width, this.x));
+            parallaxOffset += (this.x - oldX) * 0.1;
+            this.idleBob = Math.sin(time / 200) * 2;
+
+            if (this.x < 50 && paperCount < 3) {
+                paperCount = 3;
+                updatePaperStackUI();
+                restockMessageEl.style.display = 'none';
+                if(sound.isStarted) sound.restock.triggerAttackRelease("8n");
+                for (let i = 0; i < 5; i++) {
+                    paperVFX.push({
+                        x: 60, y: 100,
+                        vx: Math.random() * 2 + 1, vy: (Math.random() - 0.5) * 2,
+                        width: 15, height: 20, rotation: 0, life: 60
+                    });
+                }
+            }
+        }
+        draw(isSilhouette = false) {
+            const designerX = this.x; 
+            const designerY = this.y + this.idleBob;
+            
+            const bodyColor = isSilhouette ? '#1a142d' : '#333';
+            const scarfColor = isSilhouette ? '#1a142d' : '#00ffff';
+            const skinColor = isSilhouette ? '#1a142d' : '#ffdbac';
+            const hairColor = isSilhouette ? '#1a142d' : '#654321';
+            const glassesColor = isSilhouette ? '#1a142d' : '#000';
+
+            internalCtx.fillStyle = bodyColor;
+            internalCtx.beginPath();
+            internalCtx.moveTo(designerX + 5, designerY + this.height);
+            internalCtx.lineTo(designerX + 15, designerY + 20);
+            internalCtx.lineTo(designerX + this.width - 15, designerY + 20);
+            internalCtx.lineTo(designerX + this.width - 5, designerY + this.height);
+            internalCtx.closePath();
+            internalCtx.fill();
+            internalCtx.fillStyle = scarfColor;
+            internalCtx.fillRect(designerX + 10, designerY + 20, this.width - 20, 10);
+            internalCtx.fillStyle = skinColor;
+            internalCtx.fillRect(designerX + 15, designerY, 20, 25);
+            internalCtx.fillStyle = glassesColor;
+            internalCtx.fillRect(designerX + 16, designerY + 8, 8, 8);
+            internalCtx.fillRect(designerX + 26, designerY + 8, 8, 8);
+            internalCtx.fillStyle = hairColor;
+            internalCtx.fillRect(designerX + 15, designerY + 20, 20, 8);
+            internalCtx.beginPath();
+            internalCtx.arc(designerX + 25, designerY, 14, Math.PI, 2 * Math.PI);
+            internalCtx.fill();
+        }
+    }
+
+    class Client {
+        constructor(y, speed) {
+            this.width = CLIENT_WIDTH; this.height = CLIENT_HEIGHT;
+            this.x = -this.width; this.y = y; this.speed = speed;
+            this.isCaught = false; this.isAngry = false;
+            this.isInvestigating = false;
+            this.isSwarming = false;
+            this.hasReachedAI = false;
+            this.caughtDesignImage = null; this.walkBob = 0;
+            this.feedbackQuote = '';
+            this.feedbackType = null;
+            this.specialRequest = null;
+            this.voicePitch = 1.0;
+            this.voiceRate = 1.2;
+
+            // Assign voice
+            if (clientVoiceCounter % 2 === 0 && femaleVoices.length > 0) {
+                this.voice = femaleVoices[Math.floor(Math.random() * femaleVoices.length)];
+            } else if (maleVoices.length > 0) {
+                this.voice = maleVoices[Math.floor(Math.random() * maleVoices.length)];
+            } else {
+                this.voice = null; // Default voice
+            }
+            clientVoiceCounter++;
+            
+            // Investigation behavior properties
+            this.investigationQuoteVisible = false;
+            this.quoteTimer = 0;
+            this.nextQuoteTime = 0;
+            this.targetX = this.x;
+            this.moveTimer = 0;
+
+            if (totalClientsSpawned === 3) {
+                 this.specialRequest = specialRequestTypes[Math.floor(Math.random() * specialRequestTypes.length)];
+                 this.quote = this.specialRequest.text;
+            } else if (totalClientsSpawned > 3 && totalClientsSpawned % 3 === 0) {
+                 this.specialRequest = specialRequestTypes[Math.floor(Math.random() * specialRequestTypes.length)];
+                 this.quote = this.specialRequest.text;
+            } else {
+                if (availableQuotes.length === 0) availableQuotes = [...clientQuotes];
+                const quoteIndex = Math.floor(Math.random() * availableQuotes.length);
+                this.quote = availableQuotes.splice(quoteIndex, 1)[0];
+            }
+            this.quoteVisible = true;
+            if (this.specialRequest && sound.isStarted) {
+                sound.specialRequest.triggerAttackRelease("C6", "8n");
+            }
+            speak(this.quote, this.voicePitch, this.voiceRate, this.voice);
+        }
+        
+        update(time) {
+            if (this.isInvestigating) {
+                // Handle investigation behavior
+                this.quoteTimer -= MS_PER_FRAME;
+                if (this.quoteTimer <= 0 && this.investigationQuoteVisible) {
+                    this.investigationQuoteVisible = false;
+                    this.nextQuoteTime = (5000 + Math.random() * 5000); // 5-10 seconds
+                }
+
+                this.nextQuoteTime -= MS_PER_FRAME;
+                if (this.nextQuoteTime <= 0 && !this.investigationQuoteVisible) {
+                    this.investigationQuoteVisible = true;
+                    this.quote = investigationQuotes[Math.floor(Math.random() * investigationQuotes.length)];
+                    this.quoteTimer = 3000; // Show for 3 seconds
+                }
+
+                this.moveTimer -= MS_PER_FRAME;
+                if (this.moveTimer <= 0) {
+                    // New target is in a zone in front of the AI server
+                    const wanderZoneStart = ai.x - this.width / 2;
+                    const wanderZoneWidth = ai.width;
+                    this.targetX = wanderZoneStart + Math.random() * wanderZoneWidth;
+                    this.moveTimer = 1000 + Math.random() * 2000; // New target every 1-3 seconds
+                }
+                
+                // Move towards target
+                const dx = this.targetX - this.x;
+                if (Math.abs(dx) > 1) {
+                    this.x += Math.sign(dx) * 0.5; // Slow walk
+                }
+                
+                this.walkBob = Math.sin(time / 250) * 1.5; // Slower bob
+                return;
+            }
+
+            if (this.isSwarming) {
+                if (this.x + this.width >= ai.x) {
+                    this.isInvestigating = true;
+                    this.isSwarming = false;
+                    this.quoteTimer = 3000 * Math.random();
+                    this.investigationQuoteVisible = true;
+                    this.quote = investigationQuotes[Math.floor(Math.random() * investigationQuotes.length)];
+                } else {
+                    this.x += this.speed * 3;
+                    this.walkBob = Math.sin(time / 100) * 3;
+                }
+                return;
+            }
+
+            // Normal movement
+            if (this.isCaught) { this.x -= this.speed * 2; } 
+            else if (this.isAngry) { this.x += this.speed * 2.5; } 
+            else { this.x += this.speed; }
+
+            this.walkBob = Math.sin(time / 150) * 2;
+            if (this.x > INTERNAL_WIDTH / 3) this.quoteVisible = false;
+        }
+
+        draw() {
+            const clientX = this.x; const clientY = this.y + this.walkBob;
+            internalCtx.fillStyle = '#8B4513';
+            internalCtx.beginPath();
+            internalCtx.moveTo(clientX, clientY + this.height);
+            internalCtx.lineTo(clientX + 5, clientY + 15);
+            internalCtx.lineTo(clientX + this.width - 5, clientY + 15);
+            internalCtx.lineTo(clientX + this.width, clientY + this.height);
+            internalCtx.closePath();
+            internalCtx.fill();
+            internalCtx.fillStyle = '#ffdbac';
+            internalCtx.fillRect(clientX + 10, clientY, 20, 20);
+            internalCtx.fillStyle = '#5a3d2b';
+            internalCtx.fillRect(clientX + 5, clientY - 2, 30, 5);
+            internalCtx.fillRect(clientX + 8, clientY - 8, 24, 8);
+            
+            const textYPosition = this.y - 15; // Anchor point for the bottom of the text, just above the head.
+            const textMaxWidth = 140; // Increased width for longer lines
+
+            if (this.isCaught) {
+                let textColor = '#00ff00'; // Default to green
+                if (this.feedbackType === 'negative') {
+                    textColor = '#ff4141'; // Red for negative
+                } else if (this.feedbackType === 'lukewarm') {
+                    textColor = '#ffffff'; // White for lukewarm
+                }
+                internalCtx.fillStyle = textColor;
+                internalCtx.font = '12px "Press Start 2P"';
+                internalCtx.textAlign = 'center';
+                wrapText(internalCtx, this.feedbackQuote, this.x + this.width / 2, textYPosition, textMaxWidth, 15);
+            } else if (this.isAngry && !this.isInvestigating) {
+                internalCtx.fillStyle = '#ff4141';
+                internalCtx.font = '16px "Press Start 2P"';
+                internalCtx.textAlign = 'center';
+                internalCtx.fillText(this.feedbackQuote, this.x + this.width / 2, textYPosition);
+            } else if (this.isInvestigating && this.investigationQuoteVisible) {
+                 internalCtx.fillStyle = '#fff';
+                internalCtx.font = '12px "Press Start 2P"';
+                internalCtx.textAlign = 'center';
+                wrapText(internalCtx, this.quote, this.x + this.width / 2, textYPosition, textMaxWidth, 15);
+            } else if (this.quoteVisible && !this.isInvestigating && !this.isSwarming) {
+                internalCtx.fillStyle = this.specialRequest ? '#ffff00' : '#fff'; // Special request is YELLOW
+                internalCtx.font = '12px "Press Start 2P"';
+                internalCtx.textAlign = 'center';
+                wrapText(internalCtx, this.quote, this.x + this.width / 2, textYPosition, textMaxWidth, 15);
+            }
+            
+            if (this.isCaught && this.caughtDesignImage) {
+                internalCtx.drawImage(this.caughtDesignImage, this.x - 15, this.y + 15, 40, 40);
+            }
+        }
+    }
+
+    class Projectile {
+        constructor(x, y, image, isBlank = false, designData = null) {
+            this.x = x; this.y = y; this.width = 50; this.height = 50;
+            this.speed = PROJECTILE_SPEED; this.image = image; this.isBlank = isBlank;
+            this.rotation = 0;
+            this.designData = designData;
+        }
+        update() { 
+            this.y += this.speed;
+            this.x += windStrength * 2; // Apply wind effect
+            this.rotation = Math.atan2(windStrength * 2, this.speed); // Calculate tilt based on velocity
+        }
+        draw() { 
+            internalCtx.save();
+            internalCtx.translate(this.x + this.width / 2, this.y + this.height / 2);
+            internalCtx.rotate(this.rotation);
+            internalCtx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
+            internalCtx.restore();
+        }
+    }
+
+    class AI {
+        constructor(x, y) {
+            this.x = x; this.y = y; this.width = AI_WIDTH; this.height = AI_HEIGHT;
+            this.blinkingLights = [];
+            this.breaches = 0;
+            this.setupLights();
+        }
+        setupLights() {
+            const lightColors = ['#00ff00', '#ffff00', '#ff0000', '#00ffff'];
+            for (let i = 0; i < 10; i++) {
+                this.blinkingLights.push({
+                    x: this.x + 10 + Math.random() * (this.width - 20),
+                    y: this.y + 10 + Math.random() * (this.height - 20),
+                    radius: Math.random() * 2 + 1,
+                    color: lightColors[Math.floor(Math.random() * lightColors.length)],
+                    isOn: Math.random() > 0.5,
+                    blinkRate: Math.floor(Math.random() * 100) + 20,
+                    blinkCounter: 0,
+                });
+            }
+        }
+        update() {
+            this.blinkingLights.forEach(light => {
+                light.blinkCounter++;
+                if (light.blinkCounter > light.blinkRate) {
+                    light.isOn = !light.isOn;
+                    light.blinkCounter = 0;
+                }
+            });
+        }
+        draw() {
+            // Draw main body
+            internalCtx.fillStyle = '#222';
+            internalCtx.fillRect(this.x, this.y, this.width, this.height);
+            internalCtx.shadowColor = '#ff00ff';
+            internalCtx.shadowBlur = 20;
+            internalCtx.strokeStyle = '#ff00ff';
+            internalCtx.lineWidth = 4;
+            internalCtx.strokeRect(this.x, this.y, this.width, this.height);
+            internalCtx.shadowBlur = 0;
+            for (let i = 0; i < 4; i++) {
+                internalCtx.fillStyle = '#3a3a3a';
+                internalCtx.fillRect(this.x + 5, this.y + 10 + i * 28, this.width - 10, 20);
+            }
+            this.blinkingLights.forEach(light => {
+                if (light.isOn) {
+                    internalCtx.fillStyle = light.color;
+                    internalCtx.beginPath();
+                    internalCtx.arc(light.x, light.y, light.radius, 0, Math.PI * 2);
+                    internalCtx.fill();
+                }
+            });
+            internalCtx.fillStyle = '#ff4141';
+            internalCtx.font = '36px "Press Start 2P"';
+            internalCtx.textAlign = 'center';
+            internalCtx.textBaseline = 'middle';
+            internalCtx.shadowColor = '#ff4141';
+            internalCtx.shadowBlur = 15;
+            internalCtx.fillText('AI', this.x + this.width / 2, this.y + this.height / 2);
+            internalCtx.shadowBlur = 0;
+
+            // Draw breach indicator lights
+            for (let i = 0; i < 3; i++) {
+                const lightX = this.x + (this.width / 4) * (i + 1);
+                const lightY = this.y - 15;
+                const radius = 8;
+                if (i < this.breaches) {
+                    // This light is ON
+                    internalCtx.fillStyle = '#ff0000';
+                    internalCtx.shadowColor = '#ff0000';
+                    internalCtx.shadowBlur = 15;
+                } else {
+                    // This light is OFF
+                    internalCtx.fillStyle = '#550000';
+                    internalCtx.shadowBlur = 0;
+                }
+                internalCtx.beginPath();
+                internalCtx.arc(lightX, lightY, radius, 0, Math.PI * 2);
+                internalCtx.fill();
+            }
+            internalCtx.shadowBlur = 0; // Reset shadow
+        }
+    }
+
+    // --- Game Initialization ---
+    function init() {
+        isGameOver = false;
+        score = 0;
+        projectiles = []; clients = []; raindrops = []; windows = []; successfulDesigns = []; vfxParticles = []; paperVFX = [];
+        lastSpawnTime = 0; parallaxOffset = 0; gameTime = 0;
+        availableQuotes = [...clientQuotes];
+        paperCount = 3;
+        hasShownFirstRestockMessage = false;
+        hasShownSpecialRequestMessage = false;
+        totalClientsSpawned = 0;
+        windStrength = 0;
+        successfulDeliveries = 0;
+        windStartTime = null;
+        currentInkColorIndex = 0;
+        usedColorsInCurrentDrawing.clear();
+        colorStreak = { 0: 0, 2: 0, 3: 0 };
+        speechQueue = [];
+        synth.cancel();
+        
+        resizeCanvas();
+        designer = new Designer(INTERNAL_WIDTH / 2 - DESIGNER_WIDTH / 2, BUILDING_HEIGHT - DESIGNER_HEIGHT - 25);
+        ai = new AI(INTERNAL_WIDTH - AI_WIDTH - 20, INTERNAL_HEIGHT - AI_HEIGHT);
+        
+        const windowHeight = 90, windowWidth = 80, windowSpacing = 10, topMargin = 40;
+        for (let i = 0, x = windowSpacing; x < INTERNAL_WIDTH; x += windowWidth + windowSpacing, i++) {
+            windows.push({ 
+                x, y: topMargin, width: windowWidth, height: windowHeight, 
+                openState: 0, color: windowColors[i % windowColors.length],
+                isUsable: i >= 1 // Only the first window is not usable
+            });
+        }
+
+        for (let i = 0; i < 200; i++) {
+            raindrops.push({
+                x: Math.random() * INTERNAL_WIDTH, y: Math.random() * INTERNAL_HEIGHT,
+                length: Math.random() * 20 + 10, speed: Math.random() * 5 + 2
+            });
+        }
+        
+        updateUI();
+        selectPencil(document.getElementById('pencil-cyan')); // Default selection
+        clearDrawing();
+        updatePaperStackUI();
+        gameOverWrapper.style.display = 'none';
+        highscoreInputContainer.style.display = 'none';
+        restartButton.style.display = 'block';
+
+        instructionMessageEl.style.display = 'block';
+        drawHereMessageEl.style.display = 'block';
+        window.addEventListener('keydown', handleFirstKeyPress, { once: true });
+        
+        if (!animationFrameId) gameLoop(0);
+    }
+
+    function manageClients(time) {
+        const activeClients = clients.filter(c => !c.isCaught && !c.isInvestigating).length;
+        
+        const spawnRate = Math.max(800, 3000 - totalClientsSpawned * 60);
+        const maxClients = Math.floor(1 + totalClientsSpawned / 15);
+
+        const randomSpawnDelay = spawnRate + (Math.random() * 500 - 250);
+
+        if (time - lastSpawnTime > randomSpawnDelay && activeClients < maxClients) {
+            totalClientsSpawned++;
+            if (totalClientsSpawned === 3 && !hasShownSpecialRequestMessage) {
+                specialRequestMessageEl.style.display = 'block';
+                setTimeout(() => { specialRequestMessageEl.style.display = 'none'; }, 4000);
+                hasShownSpecialRequestMessage = true;
+            }
+            const clientSpeed = 1.4 + totalClientsSpawned / 30;
+            clients.push(new Client(INTERNAL_HEIGHT - CLIENT_HEIGHT, clientSpeed));
+            lastSpawnTime = time;
+        }
+    }
+
+    function manageSwarm(time) {
+        if (time - lastSpawnTime > 200) { // Spawn swarm clients faster
+            const swarmClient = new Client(INTERNAL_HEIGHT - CLIENT_HEIGHT, 1.5 + Math.random());
+            swarmClient.x = -swarmClient.width - Math.random() * 200;
+            swarmClient.isSwarming = true;
+            clients.push(swarmClient);
+            lastSpawnTime = time;
+        }
+        if (clients.length > 15) {
+            clients.shift(); // Remove the oldest client to maintain performance
+        }
+    }
+
+    // --- Main Game Loop ---
+    let animationFrameId;
+    function gameLoop(time) {
+        gameTime = time;
+        update(time);
+        draw();
+        animationFrameId = requestAnimationFrame(gameLoop);
+    }
+
+    // --- Update Logic ---
+    function update(time) {
+        // Update wind strength based on successful deliveries
+        if (windStartTime !== null) {
+            const timeSinceWindStart = time - windStartTime;
+            const maxWind = Math.min(1.0, timeSinceWindStart / 90000); // Ramps up to max over 90 seconds from when it starts
+            windStrength = Math.sin(timeSinceWindStart / 8000) * maxWind; // Oscillates
+        } else {
+            windStrength = 0; // No wind before the trigger
+        }
+
+        if (!isGameOver) {
+            manageClients(time);
+            designer.update(time);
+            checkCollisions(time);
+        } else {
+            manageSwarm(time);
+        }
+        
+        ai.update();
+        
+        windows.forEach(win => {
+            if (!win.isUsable) return; // Skip non-usable windows
+            const designerMidX = designer.x + designer.width / 2;
+            const isBehind = designerMidX > win.x && designerMidX < win.x + win.width;
+            if (isBehind && win.openState < 1) win.openState += 0.1;
+            else if (!isBehind && win.openState > 0) win.openState -= 0.1;
+            win.openState = Math.max(0, Math.min(1, win.openState));
+        });
+
+        vfxParticles.forEach((p, i) => {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life--;
+            p.alpha = p.life / 60;
+            if (p.life <= 0) vfxParticles.splice(i, 1);
+        });
+        
+        paperVFX.forEach((p, i) => {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.rotation += 0.1;
+            p.life--;
+            if (p.life <= 0) paperVFX.splice(i, 1);
+        });
+
+        clients.forEach((c, i) => {
+            c.update(time);
+            if (c.x < -c.width * 2) clients.splice(i, 1);
+        });
+
+        projectiles.forEach((p, index) => {
+            p.update();
+            if (p.y > INTERNAL_HEIGHT) {
+                if (p.isBlank) { // Penalty for dropping a blank page
+                    score--;
+                    vfxParticles.push({
+                        x: p.x + p.width / 2, y: INTERNAL_HEIGHT - 50,
+                        vy: -1, vx: 0,
+                        alpha: 1, life: 60, text: '-1', color: '#ff4141'
+                    });
+                } else { // Penalty for any other missed page
+                     score--;
+                     vfxParticles.push({
+                        x: p.x + p.width / 2, y: INTERNAL_HEIGHT - 50,
+                        vy: -1, vx: 0,
+                        alpha: 1, life: 60, text: '-1', color: '#ff4141'
+                    });
+                }
+                updateUI();
+                projectiles.splice(index, 1);
+            }
+        });
+        
+        raindrops.forEach(r => {
+            r.y += r.speed;
+            r.x += windStrength * (r.speed / 2); // Rain drifts with the wind
+            if (r.y > INTERNAL_HEIGHT) { 
+                r.y = -r.length; 
+                r.x = Math.random() * INTERNAL_WIDTH; 
+            }
+            if (r.x > INTERNAL_WIDTH) r.x = 0;
+            if (r.x < 0) r.x = INTERNAL_WIDTH;
+        });
+    }
+
+    function checkCollisions(time) {
+        clients.forEach(client => {
+            if (isGameOver || client.isCaught || client.hasReachedAI) {
+                return; // Skip clients that are already handled
+            }
+
+            // Check for projectile collision only if client is not angry
+            if (!client.isAngry) {
+                projectiles.forEach((p, pIndex) => {
+                    if (p.x < client.x + client.width && p.x + p.width > client.x &&
+                        p.y < client.y + client.height && p.y + p.height > client.y) {
+                        if (p.isBlank) { 
+                            client.isAngry = true; 
+                            client.feedbackQuote = blankPageQuotes[Math.floor(Math.random() * blankPageQuotes.length)];
+                            speak(client.feedbackQuote, 0.8, 0.9, client.voice, true); // Sad voice, immediate
+                            score -= 10; // -10 points for blank page to client
+                            vfxParticles.push({
+                                x: client.x + client.width / 2, y: client.y - 20,
+                                vy: -1, vx: 0,
+                                alpha: 1, life: 60, text: '-10', color: '#ff4141'
+                            });
+                            updateUI();
+                        } else {
+                            client.isCaught = true; 
+                            client.caughtDesignImage = p.image;
+                            
+                            let points = 0;
+                            let fulfilledSpecial = false;
+
+                            if (client.specialRequest) {
+                                if (client.specialRequest.type === 'impossible') {
+                                    points = 5;
+                                    client.feedbackQuote = "It's just not Horizony enough";
+                                    client.feedbackType = 'lukewarm';
+                                    speak(client.feedbackQuote, 0.9, 1.0, client.voice, true); // Lukewarm voice, immediate
+                                } else if (analyzeDesign(p.designData, client.specialRequest)) {
+                                    points = 15;
+                                    fulfilledSpecial = true;
+                                    client.feedbackQuote = positiveQuotes[Math.floor(Math.random() * positiveQuotes.length)];
+                                    client.feedbackType = 'positive';
+                                    speak(client.feedbackQuote, 1.2, 1.4, client.voice, true); // Excited voice, immediate
+                                    vfxParticles.push({
+                                        x: client.x + client.width / 2 - 10, y: client.y - 20,
+                                        vy: -1, vx: 0,
+                                        alpha: 1, life: 60, text: '+10', color: '#00ff00'
+                                    });
+                                    vfxParticles.push({
+                                        x: client.x + client.width / 2 + 20, y: client.y - 25,
+                                        vy: -1, vx: 0,
+                                        alpha: 1, life: 60, text: '+5', color: '#00ff00'
+                                    });
+                                } else {
+                                    points = 5;
+                                    client.feedbackQuote = offBriefQuotes[Math.floor(Math.random() * offBriefQuotes.length)];
+                                    client.feedbackType = 'lukewarm';
+                                    speak(client.feedbackQuote, 0.9, 1.0, client.voice, true); // Lukewarm voice, immediate
+                                }
+                            } else {
+                                const isMinimal = analyzeDesign(p.designData, { type: 'density', detail: 'minimal' });
+                                if (p.designData.usedColors.size === 3) {
+                                    points = 15;
+                                } else if (isMinimal) {
+                                    points = 5;
+                                } else {
+                                    points = 10;
+                                }
+
+                                if(p.designData.usedColors.size === 1) {
+                                    const colorIndex = p.designData.usedColors.values().next().value;
+                                    colorStreak[colorIndex]++;
+                                    Object.keys(colorStreak).forEach(key => {
+                                        if (key != colorIndex) colorStreak[key] = 0;
+                                    });
+                                    if(colorStreak[colorIndex] > 2) {
+                                        const penalty = (colorStreak[colorIndex] - 2) * 2;
+                                        points = Math.max(0, points - penalty);
+                                        const colorName = Object.keys(pencilColors).find(key => pencilColors[key] === colorIndex).replace('pencil-', '');
+                                        client.feedbackQuote = `I'm seeing a lot of ${colorName} lately...`;
+                                        client.feedbackType = 'negative';
+                                        speak(client.feedbackQuote, 0.8, 0.9, client.voice, true); // Sad voice, immediate
+                                    } else {
+                                        client.feedbackQuote = positiveQuotes[Math.floor(Math.random() * positiveQuotes.length)];
+                                        client.feedbackType = 'positive';
+                                        speak(client.feedbackQuote, 1.2, 1.4, client.voice, true); // Excited voice, immediate
+                                    }
+                                } else {
+                                    Object.keys(colorStreak).forEach(key => { colorStreak[key] = 0; });
+                                    client.feedbackQuote = positiveQuotes[Math.floor(Math.random() * positiveQuotes.length)];
+                                    client.feedbackType = 'positive';
+                                    speak(client.feedbackQuote, 1.2, 1.4, client.voice, true); // Excited voice, immediate
+                                }
+                            }
+                            
+                            score += points; 
+                            vfxParticles.push({
+                                x: client.x + client.width / 2, y: client.y - 20,
+                                vy: -1, vx: 0,
+                                alpha: 1, life: 60, text: `+${points}`, color: '#00ff00'
+                            });
+                            successfulDesigns.push({ src: p.image.src, wasSpecial: fulfilledSpecial });
+
+                            successfulDeliveries++;
+                            if (successfulDeliveries === 5 && windStartTime === null) {
+                                windStartTime = time;
+                                windyMessageEl.style.display = 'block';
+                                setTimeout(() => { windyMessageEl.style.display = 'none'; }, 4000);
+                            }
+                            updateUI();
+                        }
+                        projectiles.splice(pIndex, 1);
+                    }
+                });
+            }
+
+            // Check for reaching the AI server
+            if (client.x + client.width >= ai.x) {
+                client.hasReachedAI = true;
+                client.isInvestigating = true;
+                client.isAngry = false; // Stop being angry
+                
+                // Initialize investigation state
+                client.quoteTimer = 3000; // Show first quote for 3s
+                client.investigationQuoteVisible = true;
+                client.quote = investigationQuotes[Math.floor(Math.random() * investigationQuotes.length)];
+                // No speech for investigation
+                
+                ai.breaches++;
+                if(sound.isStarted && ai.breaches < 3) sound.breach.triggerAttackRelease("A2", "8n");
+                
+                if (ai.breaches >= 3) {
+                    gameOver();
+                }
+            }
+        });
+    }
+    
+    // --- Drawing Functions ---
+    function drawBackground() {
+        const gradient = internalCtx.createLinearGradient(0, 0, 0, INTERNAL_HEIGHT);
+        gradient.addColorStop(0, '#0c0a18');
+        gradient.addColorStop(1, '#2c244d');
+        internalCtx.fillStyle = gradient;
+        internalCtx.fillRect(0, 0, INTERNAL_WIDTH, INTERNAL_HEIGHT);
+
+        const skylineOffset = (parallaxOffset * 0.2) % INTERNAL_WIDTH;
+        for (let i = -1; i < 2; i++) {
+            const x = i * INTERNAL_WIDTH + skylineOffset;
+            internalCtx.fillStyle = '#1a142d';
+            internalCtx.fillRect(x + 50, INTERNAL_HEIGHT - 250, 80, 100);
+            internalCtx.fillRect(x + 200, INTERNAL_HEIGHT - 300, 120, 150);
+            internalCtx.fillRect(x + 400, INTERNAL_HEIGHT - 280, 90, 130);
+            internalCtx.fillRect(x + 600, INTERNAL_HEIGHT - 320, 150, 170);
+        }
+
+        const buildingsOffset = (parallaxOffset * 0.5) % INTERNAL_WIDTH;
+        for (let i = -1; i < 2; i++) {
+            const x = i * INTERNAL_WIDTH + buildingsOffset;
+            internalCtx.fillStyle = '#251e3e';
+            internalCtx.fillRect(x, INTERNAL_HEIGHT - 200, 200, 200);
+            internalCtx.fillRect(x + 300, INTERNAL_HEIGHT - 220, 150, 220);
+            internalCtx.fillRect(x + 550, INTERNAL_HEIGHT - 180, 250, 180);
+        }
+    }
+
+    function drawBuilding() {
+        internalCtx.fillStyle = '#1f1a33';
+        internalCtx.fillRect(0, 0, INTERNAL_WIDTH, BUILDING_HEIGHT);
+        for(let x=0; x < INTERNAL_WIDTH; x += 20) {
+            internalCtx.strokeStyle = '#2a244a';
+            internalCtx.lineWidth = 1;
+            internalCtx.beginPath();
+            internalCtx.moveTo(x, 0);
+            internalCtx.lineTo(x, BUILDING_HEIGHT);
+            internalCtx.stroke();
+        }
+        internalCtx.fillStyle = '#2c244d';
+        internalCtx.fillRect(0, 40, INTERNAL_WIDTH, 90);
+    }
+
+    function drawWindowsAndDesigner() {
+        const firstWindow = windows[0];
+        if (firstWindow) {
+            internalCtx.fillStyle = '#fff';
+            for (let i = 0; i < 5; i++) {
+                internalCtx.fillRect(firstWindow.x + 20, firstWindow.y + firstWindow.height - 10 - i * 5, 40, 4);
+            }
+        }
+
+        windows.forEach(win => {
+            internalCtx.save();
+            internalCtx.beginPath();
+            internalCtx.rect(win.x, win.y, win.width, win.height);
+            internalCtx.clip();
+
+            const glowAlpha = (Math.sin(gameTime / 300) * 0.2 + 0.5) * win.openState;
+            const grad = internalCtx.createRadialGradient(win.x + win.width/2, win.y + win.height/2, 0, win.x + win.width/2, win.y + win.height/2, win.width);
+            grad.addColorStop(0, `rgba(255, 165, 0, ${glowAlpha})`);
+            grad.addColorStop(1, 'rgba(255, 165, 0, 0)');
+            internalCtx.fillStyle = grad;
+            internalCtx.fillRect(win.x, win.y, win.width, win.height);
+            
+            designer.draw(win.openState < 1);
+            internalCtx.restore();
+
+            const slideY = win.y - (win.height * win.openState);
+            internalCtx.fillStyle = win.color;
+            internalCtx.fillRect(win.x, slideY, win.width, win.height);
+        });
+    }
+
+    function drawFramesAndDetails() {
+        windows.forEach(win => {
+            internalCtx.strokeStyle = '#4a0b48';
+            internalCtx.lineWidth = 4;
+            internalCtx.strokeRect(win.x, win.y, win.width, win.height);
+            internalCtx.fillStyle = '#333';
+            internalCtx.fillRect(win.x - 5, win.y + win.height + 5, win.width + 10, 15);
+            for(let j=0; j<5; j++) {
+                internalCtx.fillRect(win.x + j * (win.width/4), win.y + win.height + 5, 4, 15);
+            }
+        });
+    }
+    
+    function drawStreet() {
+        internalCtx.fillStyle = '#222';
+        internalCtx.fillRect(0, INTERNAL_HEIGHT - 40, INTERNAL_WIDTH, 40);
+        internalCtx.fillStyle = '#444';
+        internalCtx.fillRect(0, INTERNAL_HEIGHT - 40, INTERNAL_WIDTH, 10);
+    }
+    
+    function drawVFX() {
+        vfxParticles.forEach(p => {
+            internalCtx.globalAlpha = p.alpha;
+            internalCtx.fillStyle = p.color || '#00ff00';
+            internalCtx.font = '16px "Press Start 2P"';
+            internalCtx.textAlign = 'center';
+            internalCtx.fillText(p.text, p.x, p.y);
+            internalCtx.globalAlpha = 1;
+        });
+
+        paperVFX.forEach(p => {
+            internalCtx.save();
+            internalCtx.translate(p.x, p.y);
+            internalCtx.rotate(p.rotation);
+            internalCtx.fillStyle = `rgba(240, 240, 240, ${p.life / 60})`;
+            internalCtx.fillRect(-p.width/2, -p.height/2, p.width, p.height);
+            internalCtx.restore();
+        });
+    }
+
+    function drawRain() {
+        internalCtx.strokeStyle = 'rgba(174,194,224,0.5)';
+        internalCtx.lineWidth = 1;
+        internalCtx.lineCap = 'round';
+        raindrops.forEach(r => {
+            const windOffset = r.length * (windStrength * 2 / PROJECTILE_SPEED);
+            internalCtx.beginPath();
+            internalCtx.moveTo(r.x, r.y);
+            internalCtx.lineTo(r.x + windOffset, r.y + r.length);
+            internalCtx.stroke();
+        });
+    }
+
+    function draw() {
+        // Draw all game elements to the internal canvas
+        drawBackground();
+        drawStreet();
+        ai.draw();
+        drawBuilding();
+        drawWindowsAndDesigner();
+        drawFramesAndDetails();
+        clients.forEach(c => c.draw(gameTime));
+        projectiles.forEach(p => p.draw());
+        drawVFX();
+        drawRain();
+
+        // Scale the internal canvas to fit the display canvas
+        gameCtx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+        gameCtx.drawImage(internalCanvas, 0, 0, gameCanvas.width, gameCanvas.height);
+    }
+
+    // --- UI and Game State Functions ---
+    function updateUI() { 
+        scoreEl.textContent = `Score: ${score}`; 
+        topScoreEl.textContent = `HI-SCORE: ${topScore} ${topScoreName}`;
+    }
+
+    function selectPencil(pencilElement) {
+        pencilButtons.forEach(p => p.classList.remove('selected'));
+        pencilElement.classList.add('selected');
+        currentInkColorIndex = pencilColors[pencilElement.id];
+        drawingCtx.strokeStyle = inkColors[currentInkColorIndex];
+    }
+
+    function updatePaperStackUI() {
+        const hasPaper = paperCount > 0;
+        drawingCanvas.style.display = hasPaper ? 'block' : 'none';
+        pencilContainer.style.display = hasPaper ? 'flex' : 'none';
+        trashIcon.style.display = hasPaper ? 'block' : 'none';
+        stack2El.style.display = paperCount > 1 ? 'block' : 'none';
+        stack3El.style.display = paperCount > 2 ? 'block' : 'none';
+    }
+    
+    function gameOver() {
+        if (isGameOver) return; // Prevent multiple calls
+        isGameOver = true;
+        if(sound.isStarted) sound.gameOver.triggerAttackRelease("C3", "1n");
+        instructionMessageEl.style.display = 'none';
+        drawHereMessageEl.style.display = 'none';
+        synth.cancel(); // Clear any pending speech
+        speechQueue = [];
+
+        // Clear projectiles and non-investigating clients
+        projectiles = [];
+        clients = clients.filter(c => c.isInvestigating);
+
+        showGameOverScreen();
+    }
+
+    async function showGameOverScreen() {
+        messageTextEl.innerHTML = "GAME OVER<br>THE CLIENTS HAVE FIGURED OUT AI";
+        portfolioContainer.style.display = 'none'; // Hide portfolio initially
+        if (score > 0) { // Only submit scores greater than 0
+            highscoreInputContainer.style.display = 'block';
+            restartButton.style.display = 'none';
+        } else {
+            highscoreInputContainer.style.display = 'none';
+            restartButton.style.display = 'block';
+            await showLeaderboard(leaderboardList);
+        }
+
+        portfolioImagesContainer.innerHTML = '';
+        successfulDesigns.forEach(design => {
+            const div = document.createElement('div');
+            div.className = 'portfolio-item';
+            div.onclick = () => downloadPortfolioItem(design.src);
+
+            const img = document.createElement('img');
+            img.src = design.src;
+            
+            const icon = document.createElement('div');
+            icon.className = 'download-icon';
+            icon.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="white" style="image-rendering: pixelated;"><path d="M4 18h16v2H4z M11 4h2v10h4l-5 5-5-5h4z"></path></svg>`;
+
+            div.appendChild(img);
+            div.appendChild(icon);
+
+            if (design.wasSpecial) {
+                const medal = document.createElement('div');
+                medal.className = 'medal-icon';
+                medal.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="#FFD700"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15l-3.5-3.5 1.41-1.41L11 14.17l5.59-5.59L18 10l-7 7z"></path></svg>`;
+                medal.style.display = 'block';
+                div.appendChild(medal);
+            }
+
+            portfolioImagesContainer.appendChild(div);
+        });
+        
+        gameOverWrapper.style.display = 'flex';
+    }
+
+    function clearDrawing() {
+        drawingCtx.fillStyle = '#f0f0f0';
+        drawingCtx.fillRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+        drawingCtx.strokeStyle = inkColors[currentInkColorIndex];
+        drawingCtx.lineWidth = 3;
+        drawingCtx.lineCap = 'round';
+        drawingCtx.lineJoin = 'round';
+        usedColorsInCurrentDrawing.clear();
+    }
+    
+    function isCanvasBlank(canvas) {
+        const context = canvas.getContext('2d');
+        const pixelBuffer = new Uint32Array(context.getImageData(0, 0, canvas.width, canvas.height).data.buffer);
+        return !pixelBuffer.some(color => color !== 0 && color !== 0xfff0f0f0);
+    }
+
+    function wrapText(context, text, x, y, maxWidth, lineHeight) {
+        const words = text.split(' ');
+        let line = '';
+        const lines = [];
+
+        // 1. Split text into an array of lines
+        for(let n = 0; n < words.length; n++) {
+            const testLine = line + words[n] + ' ';
+            const metrics = context.measureText(testLine);
+            const testWidth = metrics.width;
+            if (testWidth > maxWidth && n > 0) {
+                lines.push(line.trim());
+                line = words[n] + ' ';
+            } else {
+                line = testLine;
+            }
+        }
+        lines.push(line.trim());
+
+        // 2. 'y' is the desired vertical position for the BOTTOM of the entire text block.
+        const totalTextHeight = lines.length * lineHeight;
+        const topOfTextBlock = y - totalTextHeight;
+
+        // 3. Draw the lines, starting from the calculated top position.
+        for (let i = 0; i < lines.length; i++) {
+            // We add lineHeight to the top to get the baseline for the first line.
+            context.fillText(lines[i], x, topOfTextBlock + (i + 1) * lineHeight);
+        }
+    }
+
+    function dropDesign() {
+        if (isGameOver) return;
+        
+        if (paperCount <= 0) {
+            if (!hasShownFirstRestockMessage) {
+                if(sound.isStarted) sound.outOfPaper.triggerAttackRelease("A2", "16n");
+                restockMessageEl.style.display = 'block';
+                hasShownFirstRestockMessage = true;
+                setTimeout(() => {
+                    restockMessageEl.style.display = 'none';
+                }, 3000);
+            }
+            return;
+        }
+        
+        const designerMidX = designer.x + designer.width / 2;
+        const currentWindow = windows.find(win => designerMidX > win.x && designerMidX < win.x + win.width);
+
+        if (currentWindow) {
+            if (currentWindow.isUsable && currentWindow.openState >= 1) {
+                if(sound.isStarted) sound.drop.triggerAttackRelease("C4", "16n");
+                const isBlank = isCanvasBlank(drawingCanvas);
+                const designData = {
+                    imageData: drawingCtx.getImageData(0, 0, drawingCanvas.width, drawingCanvas.height),
+                    usedColors: new Set(usedColorsInCurrentDrawing)
+                };
+                const designImage = new Image();
+                designImage.src = drawingCanvas.toDataURL();
+                designImage.onload = () => {
+                    const projectile = new Projectile(
+                        designer.x + (designer.width / 2) - 25, 
+                        BUILDING_HEIGHT - 20, 
+                        designImage, 
+                        isBlank,
+                        designData
+                    );
+                    projectiles.push(projectile);
+                    paperCount--;
+                    updatePaperStackUI();
+                    if (paperCount === 0 && !hasShownFirstRestockMessage) {
+                        if(sound.isStarted) sound.outOfPaper.triggerAttackRelease("A2", "16n");
+                        restockMessageEl.style.display = 'block';
+                        hasShownFirstRestockMessage = true;
+                        setTimeout(() => {
+                            restockMessageEl.style.display = 'none';
+                        }, 3000);
+                    }
+                    clearDrawing();
+                };
+            } else if (!currentWindow.isUsable) {
+                if(sound.isStarted) sound.noDrop.triggerAttackRelease("A1", "16n");
+            }
+        }
+    }
+
+    function downloadPortfolioItem(src) {
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        const img = new Image();
+        img.src = src;
+        img.onload = () => {
+            tempCanvas.width = 200;
+            tempCanvas.height = 220;
+            tempCtx.fillStyle = '#f0f0f0';
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            tempCtx.drawImage(img, 25, 10, 150, 150);
+            
+            tempCtx.fillStyle = 'rgba(0,0,0,0.7)';
+            tempCtx.fillRect(0, 170, tempCanvas.width, 40);
+
+            tempCtx.fillStyle = '#fff';
+            tempCtx.font = '10px "Press Start 2P"';
+            tempCtx.textAlign = 'center';
+            tempCtx.fillText("This was created in", 100, 190);
+            tempCtx.fillText("DESIGNERS vs. AI", 100, 205);
+
+            const dataUrl = tempCanvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = 'design-vs-ai-creation.png';
+            link.href = dataUrl;
+            link.click();
+
+            copiedMessageEl.style.display = 'block';
+            setTimeout(() => { copiedMessageEl.style.display = 'none' }, 2000);
+        };
+    }
+
+    function analyzeDesign(designData, request) {
+        const { imageData: imageDataObject, usedColors } = designData;
+        
+        switch(request.type) {
+            case 'color_count':
+                return usedColors.size === request.detail;
+            case 'density':
+                const imageData = imageDataObject.data;
+                const canvasWidth = imageDataObject.width;
+                const canvasHeight = imageDataObject.height;
+                let drawnPixels = 0;
+                for (let i = 0; i < imageData.length; i += 4) {
+                    const a = imageData[i+3];
+                    if (a > 0) {
+                        const r = imageData[i];
+                        const g = imageData[i+1];
+                        const b = imageData[i+2];
+                        if (r !== 240 || g !== 240 || b !== 240) {
+                            drawnPixels++;
+                        }
+                    }
+                }
+                const totalPixels = canvasWidth * canvasHeight;
+                const density = drawnPixels / totalPixels;
+                if (request.detail === 'dense') return density > 0.20; // 20% filled
+                if (request.detail === 'minimal') return density < 0.05; // 5% filled
+                break;
+            case 'color':
+                const colorIndexMap = {'#00ffff': 0, '#ff00ff': 2, '#ffc300': 3};
+                const requiredIndex = colorIndexMap[request.detail];
+                return usedColors.size === 1 && usedColors.has(requiredIndex);
+            case 'color_combo':
+                return usedColors.size === 2 && usedColors.has(request.detail[0]) && usedColors.has(request.detail[1]);
+            case 'zone':
+                return isZoneEmpty(imageDataObject, request.detail);
+            case 'impossible':
+                return false; 
+        }
+
+        return false; // Default
+    }
+
+    function isZoneEmpty(imageDataObject, zone) {
+        const data = imageDataObject.data;
+        const width = imageDataObject.width;
+        const height = imageDataObject.height;
+
+        let startX = 0, endX = width;
+        let startY = 0, endY = height;
+
+        switch(zone) {
+            case 'left_empty':   endX = Math.floor(width / 2); break;
+            case 'right_empty':  startX = Math.ceil(width / 2); break;
+            case 'top_empty':    endY = Math.floor(height / 2); break;
+            case 'bottom_empty': startY = Math.ceil(height / 2); break;
+        }
+
+        for (let y = startY; y < endY; y++) {
+            for (let x = startX; x < endX; x++) {
+                const i = (y * width + x) * 4;
+                const alpha = data[i + 3];
+                // Check if pixel is not fully transparent and not the background color
+                if (alpha > 0 && (data[i] !== 240 || data[i+1] !== 240 || data[i+2] !== 240)) {
+                    return false; // Found a drawn pixel
+                }
+            }
+        }
+        return true; // Zone is empty
+    }
+
+
+    async function showLeaderboard(listElement, newScoreData) {
+        if (!scoresCollectionRef) return;
+        const q = query(scoresCollectionRef, orderBy("score", "desc"), limit(10));
+        const querySnapshot = await getDocs(q);
+        listElement.innerHTML = '';
+        querySnapshot.forEach(doc => {
+            const data = doc.data();
+            const li = document.createElement('li');
+            li.textContent = `${data.name}: ${data.score}`;
+            if (newScoreData && data.timestamp && data.timestamp.toMillis() === newScoreData.timestamp.getTime()) {
+                li.classList.add('highlight');
+            }
+            listElement.appendChild(li);
+        });
+        leaderboardContainer.style.display = 'flex';
+    }
+
+    // --- Event Listeners ---
+    function handleFirstKeyPress() {
+        instructionMessageEl.style.display = 'none';
+        // drawHereMessageEl is now handled by the mouse listener
+        window.removeEventListener('keydown', handleFirstKeyPress);
+    }
+    
+    window.addEventListener('keydown', (e) => {
+        keys[e.key] = true;
+        if (e.code === 'Space') { e.preventDefault(); dropDesign(); }
+    });
+    window.addEventListener('keyup', (e) => { keys[e.key] = false; });
+    restartButton.addEventListener('click', () => { init(); });
+    submitScoreButton.addEventListener('click', async () => {
+        const newName = initialsInput.value.substring(0, 3).toUpperCase() || 'AAA';
+        const newScoreTimestamp = new Date();
+        const newScore = {
+            score: score,
+            name: newName,
+            timestamp: newScoreTimestamp,
+        };
+        if (scoresCollectionRef) {
+            await addDoc(scoresCollectionRef, newScore);
+        }
+        highscoreInputContainer.style.display = 'none';
+        portfolioContainer.style.display = 'flex';
+        restartButton.style.display = 'block';
+        await showLeaderboard(leaderboardList, newScore);
+    });
+
+    muteButton.addEventListener('click', () => {
+        Tone.Master.mute = !Tone.Master.mute;
+        if (Tone.Master.mute) {
+            synth.cancel();
+            speechQueue = [];
+        }
+        soundOnIcon.style.display = Tone.Master.mute ? 'none' : 'block';
+        soundOffIcon.style.display = Tone.Master.mute ? 'block' : 'none';
+    });
+
+    pencilButtons.forEach(pencil => {
+        pencil.addEventListener('click', () => selectPencil(pencil));
+    });
+    
+    trashIcon.addEventListener('click', () => {
+        if (paperCount > 0) {
+            if (sound.isStarted) sound.trash.triggerAttackRelease("4n");
+            
+            paperCount--;
+            updatePaperStackUI();
+            clearDrawing();
+
+            if (paperCount === 0 && !hasShownFirstRestockMessage) {
+                if(sound.isStarted) sound.outOfPaper.triggerAttackRelease("A2", "16n");
+                restockMessageEl.style.display = 'block';
+                hasShownFirstRestockMessage = true;
+                setTimeout(() => {
+                    restockMessageEl.style.display = 'none';
+                }, 3000);
+            }
+        }
+    });
+
+    function getMousePos(canvas, evt) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        return { 
+            x: (evt.clientX - rect.left) * scaleX, 
+            y: (evt.clientY - rect.top) * scaleY
+        };
+    }
+    drawingCanvas.addEventListener('mousedown', (e) => { 
+        isDrawing = true; 
+        lastPoint = getMousePos(drawingCanvas, e); 
+        drawHereMessageEl.style.display='none'; 
+        usedColorsInCurrentDrawing.add(currentInkColorIndex);
+    });
+    drawingCanvas.addEventListener('mousemove', (e) => {
+        if (!isDrawing) return;
+        const currentPoint = getMousePos(drawingCanvas, e);
+        drawingCtx.beginPath();
+        drawingCtx.moveTo(lastPoint.x, lastPoint.y);
+        drawingCtx.lineTo(currentPoint.x, currentPoint.y);
+        drawingCtx.stroke();
+        lastPoint = currentPoint;
+    });
+    drawingCanvas.addEventListener('mouseup', () => { isDrawing = false; });
+    drawingCanvas.addEventListener('mouseleave', () => { isDrawing = false; });
+    
+    // --- Canvas Resizing ---
+    function resizeCanvas() {
+        const containerRect = gameContainer.getBoundingClientRect();
+        gameCanvas.width = containerRect.width;
+        gameCanvas.height = containerRect.height;
+        
+        const scale = gameCanvas.width / INTERNAL_WIDTH;
+        uiScaler.style.transform = `scale(${scale})`;
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    // --- Initial Start ---
+    startScreen.addEventListener('click', async (e) => {
+        startScreen.style.display = 'none';
+        if (!sound.isStarted) {
+            await Tone.start();
+            sound.isStarted = true;
+            sound.rain.start();
+            
+            const notes = ["C2", null, "Eb2", "G2", "Bb2", "G2", "Eb2", null, "F2", null, "Ab2", "C3", "Bb2", "Ab2", "F2", null];
+            let index = 0;
+            musicLoop = new Tone.Loop(time => {
+                let note = notes[index % notes.length];
+                if (note) {
+                    sound.music.triggerAttackRelease(note, "8n", time);
+                }
+                index++;
+            }, "8n").start(0);
+            Tone.Transport.start();
+        }
+        init();
+    });
+
+    setupFirebase();
+    resizeCanvas(); // Initial call to set the UI scale
+
+</script>
+</body>
+</html>
