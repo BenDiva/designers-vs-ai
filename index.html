@@ -63,9 +63,9 @@
             width: 100%;
             height: 100%;
             background-color: #f0f0f0;
-            border: 2px solid #4a0b48;
+            border: 2px solid #444444;
             cursor: crosshair;
-            box-shadow: 0 0 15px rgba(255, 0, 255, 0.4);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
             z-index: 10;
         }
         .paper-stack {
@@ -73,7 +73,7 @@
             width: 100%;
             height: 100%;
             background-color: #ddd;
-            border: 2px solid #4a0b48;
+            border: 2px solid #444444;
         }
         #stack-2 { top: 6px; left: 6px; z-index: 9; } /* Increased offset */
         #stack-3 { top: 12px; left: 12px; z-index: 8; } /* Increased offset */
@@ -105,7 +105,7 @@
 
         #pencil-container {
             position: absolute;
-            top: 325px;
+            top: 330px; /* Moved up */
             left: 15px;
             display: flex;
             gap: 10px;
@@ -113,46 +113,69 @@
         }
         .pencil {
             width: 40px;
-            height: 60px;
+            height: 75px;
             cursor: pointer;
             transition: transform 0.15s ease-in-out;
             position: relative;
             filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.4));
         }
         .pencil-body {
+            position: absolute;
+            top: 26px; 
             width: 100%;
-            height: 100%;
-            border-radius: 5px 5px 0 0;
-            border: 3px solid #222;
+            height: 50px;
+            border-bottom-left-radius: 1px;
+            border-bottom-right-radius: 1px;
         }
-        .pencil-tip {
+        .pencil-tip { /* Wood part */
             position: absolute;
-            bottom: -15px;
+            top: 6px; 
             left: 50%;
             transform: translateX(-50%);
             width: 0;
             height: 0;
-            border-left: 17px solid transparent;
-            border-right: 17px solid transparent;
-            border-top: 15px solid #ffdd99; /* Wood color */
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-bottom: 20px solid;
         }
-        .pencil-lead {
+        .pencil-lead { /* Graphite part */
             position: absolute;
-            bottom: -15px;
+            top: 6px; /* Moved up */
             left: 50%;
             transform: translateX(-50%);
             width: 0;
             height: 0;
-            border-left: 5px solid transparent;
-            border-right: 5px solid transparent;
-            border-top: 7px solid; /* Color will be set by JS */
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-bottom: 5px solid;
         }
-        #pencil-cyan .pencil-body { background: linear-gradient(to right, #00ffff 50%, #00cccc 50%); }
-        #pencil-cyan .pencil-lead { border-top-color: #00ffff; }
-        #pencil-magenta .pencil-body { background: linear-gradient(to right, #ff00ff 50%, #cc00cc 50%); }
-        #pencil-magenta .pencil-lead { border-top-color: #ff00ff; }
-        #pencil-yellow .pencil-body { background: linear-gradient(to right, #ffc300 50%, #d9a600 50%); }
-        #pencil-yellow .pencil-lead { border-top-color: #ffc300; }
+
+        #pencil-cyan .pencil-body { background: linear-gradient(to left, #00ffff 50%, #00cccc 50%); border: 3px solid #008b8b; }
+        #pencil-cyan .pencil-tip { border-bottom-color: #ffdd99; }
+        #pencil-cyan .pencil-lead { border-bottom-color: #00ffff; }
+        
+        #pencil-magenta .pencil-body { background: linear-gradient(to left, #ff00ff 50%, #cc00cc 50%); border: 3px solid #8b008b; }
+        #pencil-magenta .pencil-tip { border-bottom-color: #ffdd99; }
+        #pencil-magenta .pencil-lead { border-bottom-color: #ff00ff; }
+        
+        #pencil-yellow .pencil-body { background: linear-gradient(to left, #ffc300 50%, #d9a600 50%); border: 3px solid #b8860b; }
+        #pencil-yellow .pencil-tip { border-bottom-color: #ffdd99; }
+        #pencil-yellow .pencil-lead { border-bottom-color: #ffc300; }
+
+        .pencil-tip::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -20px;
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-bottom: 20px solid;
+            border-bottom-color: rgba(0,0,0,0.2);
+            clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%);
+        }
+        
         .pencil.selected {
             transform: translateY(-15px);
         }
@@ -186,14 +209,29 @@
             display: none;
             z-index: 100;
         }
-        #instruction-message, #restock-message, #windy-message, #special-request-message {
-            top: 50%;
+        #restock-message, #windy-message, #lukewarm-message {
+            top: 35%;
             left: 50%;
             transform: translate(-50%, -50%);
         }
+
+        #instruction-message {
+            top: 35%;
+            left: 55%;
+            transform: translate(-50%, -50%);
+        }
+        
+        #special-request-message {
+            top: 35%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff4141;
+            border-color: #ff4141;
+            text-shadow: 0 0 5px #ff4141;
+        }
         #draw-here-message {
             top: 230px;
-            left: 170px;
+            left: 175px;
             padding: 10px;
         }
         #start-screen {
@@ -202,35 +240,42 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: #0c0a18;
+            background-image: url('https://raw.githubusercontent.com/BenDiva/designers-vs-ai/main/assets/start-screen-bg.jpg');
+            background-size: cover;
+            background-position: center;
             display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            color: #fff;
-            text-shadow: 0 0 10px #00ffcc; /* Updated glow */
             z-index: 200;
             cursor: pointer;
         }
-        #start-screen h1 {
-            font-size: 32px;
-            background: linear-gradient(to bottom, #fde179, #ff7c9b);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            text-shadow: 0 0 10px rgba(255, 124, 155, 0.5);
-            margin-bottom: 20px;
+        #start-screen-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+        }
+        #start-screen-ui {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Pushes content to top and bottom */
+            align-items: center;
+            font-size: 24px;
+            color: #fff;
+            text-shadow: 0 0 10px #00ffcc;
+            padding: 40px 0;
         }
         #start-screen-leaderboard {
-            font-size: 14px;
+            font-size: 12px;
             color: #00ffcc;
             border: 2px solid #00ffcc;
-            padding: 10px 20px;
-            margin-bottom: 30px;
-            background: rgba(0,0,0,0.5);
-            width: 350px;
+            padding: 8px 16px;
+            background: rgba(0,0,0,0.6);
+            width: 320px;
             text-align: center;
+            margin-top: 220px; /* Pushes the leaderboard down */
         }
         #start-screen-leaderboard h3 {
             margin-bottom: 10px;
@@ -393,6 +438,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            z-index: 102; /* Ensure it's above the game over screen */
         }
     </style>
 </head>
@@ -433,7 +479,8 @@
         <div id="draw-here-message" class="game-message">&lt;-- DRAW HERE</div>
         <div id="restock-message" class="game-message">Restock paper!</div>
         <div id="windy-message" class="game-message">It's getting windy!</div>
-        <div id="special-request-message" class="game-message">Fulfil special requests<br>for bonus points!</div>
+        <div id="lukewarm-message" class="game-message">Try drawing more for a better<br>client reaction, and more points!</div>
+        <div id="special-request-message" class="game-message">Deliver client requests (<span style="color: #ffff00;">yellow text</span>)<br>or risk pushing them towards AI</div>
         <div id="copied-message" class="game-message" style="border-color: #ffff00; color: #ffff00;">Image Saved!</div>
         <div id="game-over-wrapper">
             <div id="message-box">
@@ -455,12 +502,15 @@
             </div>
         </div>
         <div id="start-screen">
-            <h1>DESIGNERS vs. AI</h1>
-            <div id="start-screen-leaderboard">
-                <h3>HI-SCORES</h3>
-                <ol id="start-screen-list" class="leaderboard-ol"><li>Loading...</li></ol>
+            <canvas id="start-screen-canvas"></canvas>
+            <div id="start-screen-ui">
+                <div></div> <!-- Empty div for spacing -->
+                <div id="start-screen-leaderboard">
+                    <h3>HI-SCORES</h3>
+                    <ol id="start-screen-list" class="leaderboard-ol"><li>Loading...</li></ol>
+                </div>
+                <span id="start-prompt">Click to Start</span>
             </div>
-            <span>Click to Start</span>
         </div>
         <div id="mute-button">
             <svg id="sound-on-icon" width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path></svg>
@@ -480,6 +530,8 @@
     const gameCtx = gameCanvas.getContext('2d');
     const drawingCanvas = document.getElementById('drawing-paper');
     const drawingCtx = drawingCanvas.getContext('2d');
+    const startScreenCanvas = document.getElementById('start-screen-canvas');
+    const startScreenCtx = startScreenCanvas.getContext('2d');
     
     const internalCanvas = document.createElement('canvas');
     const internalCtx = internalCanvas.getContext('2d');
@@ -487,6 +539,14 @@
     const INTERNAL_HEIGHT = 720;
     internalCanvas.width = INTERNAL_WIDTH;
     internalCanvas.height = INTERNAL_HEIGHT;
+
+    // --- Asset Loading ---
+    const backgroundImage = new Image();
+    let isBackgroundLoaded = false;
+    backgroundImage.onload = () => { isBackgroundLoaded = true; };
+    backgroundImage.onerror = () => { console.error("Failed to load background image."); };
+    backgroundImage.src = 'https://raw.githubusercontent.com/BenDiva/designers-vs-ai/main/assets/background.jpg';
+
 
     const scoreEl = document.getElementById('score');
     const topScoreEl = document.getElementById('top-score');
@@ -500,12 +560,14 @@
     const stack3El = document.getElementById('stack-3');
     const instructionMessageEl = document.getElementById('instruction-message');
     const restockMessageEl = document.getElementById('restock-message');
+    const lukewarmMessageEl = document.getElementById('lukewarm-message');
     const copiedMessageEl = document.getElementById('copied-message');
     const highscoreInputContainer = document.getElementById('highscore-input-container');
     const initialsInput = document.getElementById('initials-input');
     const submitScoreButton = document.getElementById('submit-score-button');
     const startScreen = document.getElementById('start-screen');
     const startScreenListEl = document.getElementById('start-screen-list');
+    const startPromptEl = document.getElementById('start-prompt');
     const muteButton = document.getElementById('mute-button');
     const soundOnIcon = document.getElementById('sound-on-icon');
     const soundOffIcon = document.getElementById('sound-off-icon');
@@ -550,6 +612,7 @@
             const q = query(scoresCollectionRef, orderBy("score", "desc"), limit(10));
             onSnapshot(q, (querySnapshot) => {
                 startScreenListEl.innerHTML = ''; // Clear previous list
+                let scoreCount = 0;
                 if (!querySnapshot.empty) {
                     const topDoc = querySnapshot.docs[0].data();
                     topScore = topDoc.score;
@@ -560,12 +623,20 @@
                         const li = document.createElement('li');
                         li.textContent = `${data.name}: ${data.score}`;
                         startScreenListEl.appendChild(li);
+                        scoreCount++;
                     });
                 } else {
                     topScore = 0;
                     topScoreName = 'AI';
-                    startScreenListEl.innerHTML = '<li>No scores yet!</li>';
                 }
+
+                // Pad the list to always show 10 scores
+                for (let i = scoreCount; i < 10; i++) {
+                    const li = document.createElement('li');
+                    li.textContent = `DVA: 0`;
+                    startScreenListEl.appendChild(li);
+                }
+
                 updateUI();
             }, (error) => {
                 console.error("Error with snapshot listener:", error);
@@ -591,27 +662,33 @@
         outOfPaper: new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination(),
         footstep: new Tone.MembraneSynth({ pitchDecay: 0.01, octaves: 2, envelope: { attack: 0.001, decay: 0.1, sustain: 0 } }).toDestination(),
         rain: new Tone.Noise({ type: 'pink', playbackRate: 0.2 }).toDestination(),
-        gameOver: new Tone.Synth({ oscillator: { type: 'fatsawtooth', count: 3, spread: 30 }, envelope: { attack: 0.01, decay: 1, sustain: 0.1, release: 0.5 } }).toDestination(),
         breach: new Tone.Synth({ oscillator: { type: 'sawtooth' }, envelope: { attack: 0.01, decay: 0.5, sustain: 0.2, release: 0.2 } }).toDestination(),
         trash: new Tone.NoiseSynth({ noise: { type: 'brown' }, envelope: { attack: 0.01, decay: 0.1, sustain: 0 } }).toDestination(),
         specialRequest: new Tone.PluckSynth().connect(reverb),
-        music: new Tone.MonoSynth({
-            oscillator: { type: "sawtooth" },
-            envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 1 },
-            filterEnvelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 1, baseFrequency: 200, octaves: 4 }
-        }).toDestination()
     };
+
+    const backgroundMusicPlayer = new Tone.Player({
+        url: "https://raw.githubusercontent.com/BenDiva/designers-vs-ai/main/assets/background-music.mp3",
+        loop: true,
+    }).toDestination();
+    backgroundMusicPlayer.volume.value = -6; // Made it a bit louder
+
+    const gameOverMusicPlayer = new Tone.Player({
+        url: "https://raw.githubusercontent.com/BenDiva/designers-vs-ai/main/assets/game-over-music.mp3",
+    }).toDestination();
+    gameOverMusicPlayer.volume.value = 0; // Made it a bit louder
+
+
     sound.rain.volume.value = -25;
-    sound.music.volume.value = -18;
     sound.breach.volume.value = -10;
     sound.noDrop.volume.value = -15;
     sound.specialRequest.volume.value = -10;
-    let musicLoop;
     let lastFootstepTime = 0;
 
     // --- Game State and Configuration ---
     let designer, projectiles, ai;
     let clients = [], raindrops = [], windows = [], successfulDesigns = [], vfxParticles = [], paperVFX = [];
+    let startScreenRaindrops = [];
     let score = 0, topScore = 0, topScoreName = 'AI';
     let isGameOver = false;
     let keys = {}, isDrawing = false;
@@ -619,6 +696,8 @@
     let paperCount = 3;
     let hasShownFirstRestockMessage = false;
     let hasShownSpecialRequestMessage = false;
+    let hasShownLukewarmMessage = false;
+    let lukewarmStreak = 0;
     let lastSubmittedScoreTimestamp = null;
     let totalClientsSpawned = 0;
     let windStrength = 0;
@@ -627,6 +706,10 @@
     let currentInkColorIndex = 0;
     let usedColorsInCurrentDrawing = new Set();
     let colorStreak = { 0: 0, 2: 0, 3: 0 };
+    let lastSpecialRequestType = null;
+    let rareQuoteUsed = false;
+    let isPopupActive = false;
+    let popupQueue = [];
 
     const inkColors = ['#00ffff', '#20c2a8', '#ff00ff', '#ffc300', '#ff7f50', '#0000ff', '#00ff00']; // Updated yellow
     const pencilColors = { // Map pencil elements to main color array indices
@@ -637,9 +720,9 @@
     
     // --- DIALOGUE DATA ---
     const specialRequestTypes = [
-        { type: 'color', detail: '#00ffff', text: 'I want cyan!' },
-        { type: 'color', detail: '#ff00ff', text: 'I want magenta!' },
-        { type: 'color', detail: '#ffc300', text: 'I want yellow!' },
+        { type: 'color', detail: '#00ffff', text: 'I want Cyan!' },
+        { type: 'color', detail: '#ff00ff', text: 'I want Magenta!' },
+        { type: 'color', detail: '#ffc300', text: 'I want Yellow!' },
         { type: 'color_count', detail: 1, text: 'Just 1 colour please' },
         { type: 'color_count', detail: 2, text: "I'd like any 2 colours" },
         { type: 'color_count', detail: 3, text: 'I need all 3 colours!' },
@@ -648,35 +731,29 @@
         { type: 'color_combo', detail: [2, 0], text: 'Magenta and cyan please' },
         { type: 'color_combo', detail: [0, 3], text: 'Cyan and yellow please' },
         { type: 'color_combo', detail: [3, 2], text: 'Yellow and magenta please' },
-        { type: 'impossible', detail: 'horizon_green', text: "I want it 'Horizon Green'" },
+        { type: 'impossible', detail: 'horizon_green', text: "I want it Horizon Green" },
         { type: 'zone', detail: 'left_empty', text: 'Keep the left side empty' },
         { type: 'zone', detail: 'right_empty', text: 'Keep the right side empty' },
         { type: 'zone', detail: 'top_empty', text: 'Keep the top half empty' },
         { type: 'zone', detail: 'bottom_empty', text: 'Keep the bottom half empty' },
     ];
-
-    const windowColors = ['rgba(255, 105, 180, 0.5)', 'rgba(0, 255, 255, 0.5)', 'rgba(255, 165, 0, 0.5)', 'rgba(128, 0, 128, 0.5)'];
     
     const clientQuotes = [
         "Make it pop!", "I'll know it when I see it.", "Make the logo bigger.", "I need something viral.",
         "I want something... edgy.", "Think outside the box.", "Give it some sizzle.", "It needs a strong narrative.",
         "We need something disruptive.", "Let's leverage our assets.", "I need something with brand appeal.",
-        "We need a game-changer.", "It must be user-centric.", "Give it that je ne sais quoi.",
+        "We need a game-changer.", "It must be user-centric.", "Give it some vava-voom!",
         "Can we try something in 3D?", "It needs to feel premium", "I want something that sings",
         "Can we evoke innovation?", "I need timeless... but trending.", "I want Apple, but not Apple.",
         "Give it some wow factor.", "It should work for all audiences.", "Stand out, but in a subtle way.",
-        "Synergy, synergy, synergy!"
+        "Yo! Synergise me some synergy!"
     ];
     
-    const offBriefQuotes = [
-        "Not what I asked for, but okay.", "It'll do, I suppose.", "Hmm, not quite right.", "Fine I guess.",
-        "The worst thing I've ever seen. Approved.", "Don't worry about the brief then...", "Did you not get my email?",
-        "I'll pay you half.", "Was I not clear?"
-    ];
-
-    const blankPageQuotes = [
-        "Rubbish!", "Can you recommend another agency?", "This is empty!", "What's this?",
-        "Am I missing something?", "Nonsense.", "You suck!"
+    const colorStreakQuotes = [
+        "I'm seeing a lot of {COLOR} lately...",
+        "Man, {COLOR} again?",
+        "Ew, {COLOR} is so last week",
+        "You really love {COLOR} eh?"
     ];
     
     let availableQuotes = [];
@@ -688,11 +765,27 @@
         "Just what I wanted!", "You're great!", "Take my money!"
     ];
 
+    const minimalReactionQuotes = [
+        "It'll do, I suppose.", "Fine I guess", "You haven't really done much", 
+        "It's a bit basic", "Meh, okay", "I hope you don't charge me full price", 
+        "I'll pay you half", "Not your usual quality"
+    ];
+
+    const negativeQuotes = [
+        "Rubbish!", "Can you recommend another agency?", "What the hell is this?", "Am I missing something?",
+        "Nonsense.", "You suck!", "Don't worry about the brief then...", "Did you not get my email?", "Was I not clear?"
+    ];
+
+    const skinTones = ['#ffdbac', '#f1c27d', '#e0ac69', '#c68642', '#8d5524'];
+    const clothingTones = ['#8B4513', '#654321', '#5a3d2b', '#3d2b1f', '#2b1d0e'];
+
     const DESIGNER_WIDTH = 50, DESIGNER_HEIGHT = 60;
-    const CLIENT_WIDTH = 40, CLIENT_HEIGHT = 70;
-    const AI_WIDTH = 80, AI_HEIGHT = 120;
+    const CLIENT_WIDTH = 44, CLIENT_HEIGHT = 77; // 10% bigger
+    const AI_WIDTH = 80, AI_HEIGHT = 155;
     const PROJECTILE_SPEED = 7, BUILDING_HEIGHT = 150;
     const MS_PER_FRAME = 16.67; // Approx ms for 60fps
+    const windowHeight = 80;
+    const topMargin = 50; 
     
     // --- Text-to-Speech ---
     const synth = window.speechSynthesis;
@@ -831,6 +924,8 @@
             this.specialRequest = null;
             this.voicePitch = 1.0;
             this.voiceRate = 1.2;
+            this.skinColor = skinTones[Math.floor(Math.random() * skinTones.length)];
+            this.clothingColor = clothingTones[Math.floor(Math.random() * clothingTones.length)];
 
             // Assign voice
             if (clientVoiceCounter % 2 === 0 && femaleVoices.length > 0) {
@@ -849,12 +944,14 @@
             this.targetX = this.x;
             this.moveTimer = 0;
 
-            if (totalClientsSpawned === 3) {
-                 this.specialRequest = specialRequestTypes[Math.floor(Math.random() * specialRequestTypes.length)];
-                 this.quote = this.specialRequest.text;
-            } else if (totalClientsSpawned > 3 && totalClientsSpawned % 3 === 0) {
-                 this.specialRequest = specialRequestTypes[Math.floor(Math.random() * specialRequestTypes.length)];
-                 this.quote = this.specialRequest.text;
+            if (totalClientsSpawned === 3 || (totalClientsSpawned > 3 && totalClientsSpawned % 3 === 0)) {
+                let newRequest;
+                do {
+                    newRequest = specialRequestTypes[Math.floor(Math.random() * specialRequestTypes.length)];
+                } while (newRequest.type === lastSpecialRequestType);
+                this.specialRequest = newRequest;
+                lastSpecialRequestType = this.specialRequest.type;
+                this.quote = this.specialRequest.text;
             } else {
                 if (availableQuotes.length === 0) availableQuotes = [...clientQuotes];
                 const quoteIndex = Math.floor(Math.random() * availableQuotes.length);
@@ -927,7 +1024,9 @@
 
         draw() {
             const clientX = this.x; const clientY = this.y + this.walkBob;
-            internalCtx.fillStyle = '#8B4513';
+            
+            // --- DRAW THE BASE CLIENT (FULLY OPAQUE) ---
+            internalCtx.fillStyle = this.clothingColor;
             internalCtx.beginPath();
             internalCtx.moveTo(clientX, clientY + this.height);
             internalCtx.lineTo(clientX + 5, clientY + 15);
@@ -935,45 +1034,86 @@
             internalCtx.lineTo(clientX + this.width, clientY + this.height);
             internalCtx.closePath();
             internalCtx.fill();
-            internalCtx.fillStyle = '#ffdbac';
-            internalCtx.fillRect(clientX + 10, clientY, 20, 20);
+            internalCtx.fillStyle = this.skinColor;
+            internalCtx.fillRect(clientX + 10, clientY, this.width - 20, 20);
             internalCtx.fillStyle = '#5a3d2b';
-            internalCtx.fillRect(clientX + 5, clientY - 2, 30, 5);
-            internalCtx.fillRect(clientX + 8, clientY - 8, 24, 8);
+            internalCtx.fillRect(clientX + 5, clientY - 2, this.width - 10, 5);
+            internalCtx.fillRect(clientX + 8, clientY - 8, this.width - 16, 8);
+
+            // --- SUBTLE LIGHTING AND TINTING ---
+            const NEON_SIGN_X = INTERNAL_WIDTH * 0.55;
+            const NEON_SIGN_WIDTH = 300;
+            const clientCenterX = clientX + this.width / 2;
+            const signCenterX = NEON_SIGN_X + NEON_SIGN_WIDTH / 2;
+            const distanceToSign = Math.abs(clientCenterX - signCenterX);
+            const lightFalloff = NEON_SIGN_WIDTH * 0.8;
+            const lightIntensity = Math.max(0, 1 - (distanceToSign / lightFalloff));
+
+            internalCtx.globalCompositeOperation = 'source-atop';
+            const redTint = 10 * lightIntensity;
+            const blueTint = 20 * (1 - lightIntensity);
+            const brightness = 0.6 + (0.4 * lightIntensity);
+            internalCtx.fillStyle = `rgba(${redTint}, 0, ${blueTint}, ${1 - brightness})`;
             
-            const textYPosition = this.y - 15; // Anchor point for the bottom of the text, just above the head.
-            const textMaxWidth = 140; // Increased width for longer lines
+            // Re-draw the client's shape to apply the tint perfectly, avoiding a "blocky" overlay
+            internalCtx.beginPath();
+            internalCtx.moveTo(clientX, clientY + this.height);
+            internalCtx.lineTo(clientX + 5, clientY + 15);
+            internalCtx.lineTo(clientX + this.width - 5, clientY + 15);
+            internalCtx.lineTo(clientX + this.width, clientY + this.height);
+            internalCtx.closePath();
+            internalCtx.fill();
+            internalCtx.fillRect(clientX + 10, clientY, this.width - 20, 20);
+            internalCtx.fillRect(clientX + 5, clientY - 2, this.width - 10, 5);
+            internalCtx.fillRect(clientX + 8, clientY - 8, this.width - 16, 8);
+
+            internalCtx.globalCompositeOperation = 'source-over';
+            
+            // --- DRAW TEXT QUOTES ---
+            const textYPosition = this.y - 15;
+            const textMaxWidth = 140;
 
             if (this.isCaught) {
-                let textColor = '#00ff00'; // Default to green
-                if (this.feedbackType === 'negative') {
-                    textColor = '#ff4141'; // Red for negative
-                } else if (this.feedbackType === 'lukewarm') {
-                    textColor = '#ffffff'; // White for lukewarm
-                }
+                let textColor = '#00ff00';
+                if (this.feedbackType === 'negative') textColor = '#ff4141';
+                else if (this.feedbackType === 'lukewarm') textColor = '#ffffff';
                 internalCtx.fillStyle = textColor;
                 internalCtx.font = '12px "Press Start 2P"';
                 internalCtx.textAlign = 'center';
                 wrapText(internalCtx, this.feedbackQuote, this.x + this.width / 2, textYPosition, textMaxWidth, 15);
             } else if (this.isAngry && !this.isInvestigating) {
                 internalCtx.fillStyle = '#ff4141';
-                internalCtx.font = '16px "Press Start 2P"';
+                internalCtx.font = '12px "Press Start 2P"';
                 internalCtx.textAlign = 'center';
-                internalCtx.fillText(this.feedbackQuote, this.x + this.width / 2, textYPosition);
+                wrapText(internalCtx, this.feedbackQuote, this.x + this.width / 2, textYPosition, textMaxWidth, 15);
             } else if (this.isInvestigating && this.investigationQuoteVisible) {
                  internalCtx.fillStyle = '#fff';
                 internalCtx.font = '12px "Press Start 2P"';
                 internalCtx.textAlign = 'center';
                 wrapText(internalCtx, this.quote, this.x + this.width / 2, textYPosition, textMaxWidth, 15);
             } else if (this.quoteVisible && !this.isInvestigating && !this.isSwarming) {
-                internalCtx.fillStyle = this.specialRequest ? '#ffff00' : '#fff'; // Special request is YELLOW
+                internalCtx.fillStyle = this.specialRequest ? '#ffff00' : '#fff';
                 internalCtx.font = '12px "Press Start 2P"';
                 internalCtx.textAlign = 'center';
                 wrapText(internalCtx, this.quote, this.x + this.width / 2, textYPosition, textMaxWidth, 15);
             }
             
             if (this.isCaught && this.caughtDesignImage) {
-                internalCtx.drawImage(this.caughtDesignImage, this.x - 15, this.y + 15, 40, 40);
+                const paperX = this.x - 15;
+                const paperY = this.y + 15;
+                internalCtx.drawImage(this.caughtDesignImage, paperX, paperY, 40, 40);
+
+                // Apply lighting to the caught paper
+                const paperCenterX = paperX + 20;
+                const paperDistanceToSign = Math.abs(paperCenterX - signCenterX);
+                const paperLightIntensity = Math.max(0, 1 - (paperDistanceToSign / lightFalloff));
+                internalCtx.globalCompositeOperation = 'source-atop';
+                const pRedTint = 10 * paperLightIntensity;
+                const pBlueTint = 20 * (1 - paperLightIntensity);
+                const pBrightness = 0.6 + (0.4 * paperLightIntensity);
+                internalCtx.fillStyle = `rgba(${pRedTint}, 0, ${pBlueTint}, ${1 - pBrightness})`;
+                internalCtx.fillRect(paperX, paperY, 40, 40);
+                internalCtx.globalCompositeOperation = 'source-over';
             }
         }
     }
@@ -995,6 +1135,24 @@
             internalCtx.translate(this.x + this.width / 2, this.y + this.height / 2);
             internalCtx.rotate(this.rotation);
             internalCtx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
+
+            // Apply the same subtle lighting as clients
+            const NEON_SIGN_X = INTERNAL_WIDTH * 0.55;
+            const NEON_SIGN_WIDTH = 300;
+            const projectileCenterX = this.x + this.width / 2;
+            const signCenterX = NEON_SIGN_X + NEON_SIGN_WIDTH / 2;
+            const distanceToSign = Math.abs(projectileCenterX - signCenterX);
+            const lightFalloff = NEON_SIGN_WIDTH * 0.8;
+            const lightIntensity = Math.max(0, 1 - (distanceToSign / lightFalloff));
+
+            internalCtx.globalCompositeOperation = 'source-atop';
+            const redTint = 10 * lightIntensity;
+            const blueTint = 20 * (1 - lightIntensity);
+            const brightness = 0.6 + (0.4 * lightIntensity);
+            internalCtx.fillStyle = `rgba(${redTint}, 0, ${blueTint}, ${1 - brightness})`;
+            internalCtx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height);
+            internalCtx.globalCompositeOperation = 'source-over';
+
             internalCtx.restore();
         }
     }
@@ -1030,19 +1188,7 @@
             });
         }
         draw() {
-            // Draw main body
-            internalCtx.fillStyle = '#222';
-            internalCtx.fillRect(this.x, this.y, this.width, this.height);
-            internalCtx.shadowColor = '#ff00ff';
-            internalCtx.shadowBlur = 20;
-            internalCtx.strokeStyle = '#ff00ff';
-            internalCtx.lineWidth = 4;
-            internalCtx.strokeRect(this.x, this.y, this.width, this.height);
-            internalCtx.shadowBlur = 0;
-            for (let i = 0; i < 4; i++) {
-                internalCtx.fillStyle = '#3a3a3a';
-                internalCtx.fillRect(this.x + 5, this.y + 10 + i * 28, this.width - 10, 20);
-            }
+            // Draw blinking lights
             this.blinkingLights.forEach(light => {
                 if (light.isOn) {
                     internalCtx.fillStyle = light.color;
@@ -1051,35 +1197,26 @@
                     internalCtx.fill();
                 }
             });
-            internalCtx.fillStyle = '#ff4141';
-            internalCtx.font = '36px "Press Start 2P"';
-            internalCtx.textAlign = 'center';
-            internalCtx.textBaseline = 'middle';
-            internalCtx.shadowColor = '#ff4141';
-            internalCtx.shadowBlur = 15;
-            internalCtx.fillText('AI', this.x + this.width / 2, this.y + this.height / 2);
-            internalCtx.shadowBlur = 0;
 
             // Draw breach indicator lights
             for (let i = 0; i < 3; i++) {
                 const lightX = this.x + (this.width / 4) * (i + 1);
-                const lightY = this.y - 15;
+                const lightY = this.y - 30;
                 const radius = 8;
                 if (i < this.breaches) {
                     // This light is ON
-                    internalCtx.fillStyle = '#ff0000';
+                    internalCtx.save();
+                    internalCtx.globalCompositeOperation = 'soft-light';
+                    internalCtx.fillStyle = 'rgba(255, 0, 0, 1)';
                     internalCtx.shadowColor = '#ff0000';
-                    internalCtx.shadowBlur = 15;
-                } else {
-                    // This light is OFF
-                    internalCtx.fillStyle = '#550000';
-                    internalCtx.shadowBlur = 0;
+                    internalCtx.shadowBlur = 25;
+                    internalCtx.beginPath();
+                    internalCtx.arc(lightX, lightY, radius, 0, Math.PI * 2);
+                    internalCtx.fill();
+                    internalCtx.restore();
                 }
-                internalCtx.beginPath();
-                internalCtx.arc(lightX, lightY, radius, 0, Math.PI * 2);
-                internalCtx.fill();
+                // If the light is 'off', do nothing to make it invisible.
             }
-            internalCtx.shadowBlur = 0; // Reset shadow
         }
     }
 
@@ -1093,6 +1230,10 @@
         paperCount = 3;
         hasShownFirstRestockMessage = false;
         hasShownSpecialRequestMessage = false;
+        hasShownLukewarmMessage = false;
+        lukewarmStreak = 0;
+        popupQueue = [];
+        isPopupActive = false;
         totalClientsSpawned = 0;
         windStrength = 0;
         successfulDeliveries = 0;
@@ -1102,19 +1243,35 @@
         colorStreak = { 0: 0, 2: 0, 3: 0 };
         speechQueue = [];
         synth.cancel();
+        rareQuoteUsed = false;
         
+        gameOverMusicPlayer.stop();
+        if (backgroundMusicPlayer.state !== 'started') {
+            backgroundMusicPlayer.start();
+        } else {
+            backgroundMusicPlayer.seek(0);
+        }
+        backgroundMusicPlayer.volume.value = -10; // Reset volume on restart
+
+
         resizeCanvas();
-        designer = new Designer(INTERNAL_WIDTH / 2 - DESIGNER_WIDTH / 2, BUILDING_HEIGHT - DESIGNER_HEIGHT - 25);
-        ai = new AI(INTERNAL_WIDTH - AI_WIDTH - 20, INTERNAL_HEIGHT - AI_HEIGHT);
+        designer = new Designer(INTERNAL_WIDTH / 1.9 - DESIGNER_WIDTH / 2, BUILDING_HEIGHT - DESIGNER_HEIGHT - 22); // Moved down 3px
+        ai = new AI(INTERNAL_WIDTH - AI_WIDTH - 20, INTERNAL_HEIGHT - AI_HEIGHT - 14); // Match client baseline
         
-        const windowHeight = 90, windowWidth = 80, windowSpacing = 10, topMargin = 40;
-        for (let i = 0, x = windowSpacing; x < INTERNAL_WIDTH; x += windowWidth + windowSpacing, i++) {
-            windows.push({ 
+        const windowWidth = 76; // Decreased width
+        const windowSpacing = 14; // Increased spacing
+        const windowOffsets = [0, 0, 0, 5, 6, 7, 8, 10, 11, 9, 10, 11, 12, 13];
+
+        windows = []; // Clear existing windows before recalculating
+        for (let i = 0, x = windowSpacing - 3; x < INTERNAL_WIDTH; x += windowWidth + windowSpacing, i++) { // Start 3px to the left
+             windows.push({ 
                 x, y: topMargin, width: windowWidth, height: windowHeight, 
-                openState: 0, color: windowColors[i % windowColors.length],
-                isUsable: i >= 1 // Only the first window is not usable
+                openState: 0, 
+                isUsable: i >= 1, // Only the first window is not usable
+                xOffset: windowOffsets[i] || 0
             });
         }
+
 
         for (let i = 0; i < 200; i++) {
             raindrops.push({
@@ -1139,6 +1296,7 @@
     }
 
     function manageClients(time) {
+        if (isGameOver) return; // Prevent new clients after game over
         const activeClients = clients.filter(c => !c.isCaught && !c.isInvestigating).length;
         
         const spawnRate = Math.max(800, 3000 - totalClientsSpawned * 60);
@@ -1149,19 +1307,18 @@
         if (time - lastSpawnTime > randomSpawnDelay && activeClients < maxClients) {
             totalClientsSpawned++;
             if (totalClientsSpawned === 3 && !hasShownSpecialRequestMessage) {
-                specialRequestMessageEl.style.display = 'block';
-                setTimeout(() => { specialRequestMessageEl.style.display = 'none'; }, 4000);
+                queuePopup(specialRequestMessageEl, 4000, true); // Prioritize this popup
                 hasShownSpecialRequestMessage = true;
             }
             const clientSpeed = 1.4 + totalClientsSpawned / 30;
-            clients.push(new Client(INTERNAL_HEIGHT - CLIENT_HEIGHT, clientSpeed));
+            clients.push(new Client(INTERNAL_HEIGHT - CLIENT_HEIGHT - 14, clientSpeed)); // Moved up 4px
             lastSpawnTime = time;
         }
     }
 
     function manageSwarm(time) {
         if (time - lastSpawnTime > 200) { // Spawn swarm clients faster
-            const swarmClient = new Client(INTERNAL_HEIGHT - CLIENT_HEIGHT, 1.5 + Math.random());
+            const swarmClient = new Client(INTERNAL_HEIGHT - CLIENT_HEIGHT - 14, 1.5 + Math.random()); // Moved up 4px
             swarmClient.x = -swarmClient.width - Math.random() * 200;
             swarmClient.isSwarming = true;
             clients.push(swarmClient);
@@ -1278,17 +1435,24 @@
                 projectiles.forEach((p, pIndex) => {
                     if (p.x < client.x + client.width && p.x + p.width > client.x &&
                         p.y < client.y + client.height && p.y + p.height > client.y) {
-                        if (p.isBlank) { 
-                            client.isAngry = true; 
-                            client.feedbackQuote = blankPageQuotes[Math.floor(Math.random() * blankPageQuotes.length)];
-                            speak(client.feedbackQuote, 0.8, 0.9, client.voice, true); // Sad voice, immediate
-                            score -= 10; // -10 points for blank page to client
+                        
+                        const handleNegativeOutcome = () => {
+                            client.isCaught = false; // Important: this allows the angry state to take over
+                            client.isAngry = true;
+                            client.feedbackQuote = negativeQuotes[Math.floor(Math.random() * negativeQuotes.length)];
+                            speak(client.feedbackQuote, 0.8, 0.9, client.voice, true);
+                            score -= 10;
+                            lukewarmStreak = 0; // Reset streak on negative outcome
                             vfxParticles.push({
                                 x: client.x + client.width / 2, y: client.y - 20,
                                 vy: -1, vx: 0,
                                 alpha: 1, life: 60, text: '-10', color: '#ff4141'
                             });
                             updateUI();
+                        };
+
+                        if (p.isBlank) { 
+                            handleNegativeOutcome();
                         } else {
                             client.isCaught = true; 
                             client.caughtDesignImage = p.image;
@@ -1298,31 +1462,20 @@
 
                             if (client.specialRequest) {
                                 if (client.specialRequest.type === 'impossible') {
-                                    points = 5;
-                                    client.feedbackQuote = "It's just not Horizony enough";
-                                    client.feedbackType = 'lukewarm';
-                                    speak(client.feedbackQuote, 0.9, 1.0, client.voice, true); // Lukewarm voice, immediate
+                                    points = 0;
+                                    client.feedbackQuote = "It's just not Horizon enough.";
+                                    client.feedbackType = 'lukewarm'; // This makes them walk away peacefully
+                                    speak(client.feedbackQuote, 0.9, 1.0, client.voice, true);
                                 } else if (analyzeDesign(p.designData, client.specialRequest)) {
                                     points = 15;
                                     fulfilledSpecial = true;
                                     client.feedbackQuote = positiveQuotes[Math.floor(Math.random() * positiveQuotes.length)];
                                     client.feedbackType = 'positive';
-                                    speak(client.feedbackQuote, 1.2, 1.4, client.voice, true); // Excited voice, immediate
-                                    vfxParticles.push({
-                                        x: client.x + client.width / 2 - 10, y: client.y - 20,
-                                        vy: -1, vx: 0,
-                                        alpha: 1, life: 60, text: '+10', color: '#00ff00'
-                                    });
-                                    vfxParticles.push({
-                                        x: client.x + client.width / 2 + 20, y: client.y - 25,
-                                        vy: -1, vx: 0,
-                                        alpha: 1, life: 60, text: '+5', color: '#00ff00'
-                                    });
+                                    speak(client.feedbackQuote, 1.2, 1.4, client.voice, true);
                                 } else {
-                                    points = 5;
-                                    client.feedbackQuote = offBriefQuotes[Math.floor(Math.random() * offBriefQuotes.length)];
-                                    client.feedbackType = 'lukewarm';
-                                    speak(client.feedbackQuote, 0.9, 1.0, client.voice, true); // Lukewarm voice, immediate
+                                    handleNegativeOutcome();
+                                    projectiles.splice(pIndex, 1); // Remove projectile and exit early
+                                    return;
                                 }
                             } else {
                                 const isMinimal = analyzeDesign(p.designData, { type: 'density', detail: 'minimal' });
@@ -1344,22 +1497,45 @@
                                         const penalty = (colorStreak[colorIndex] - 2) * 2;
                                         points = Math.max(0, points - penalty);
                                         const colorName = Object.keys(pencilColors).find(key => pencilColors[key] === colorIndex).replace('pencil-', '');
-                                        client.feedbackQuote = `I'm seeing a lot of ${colorName} lately...`;
+                                        const quoteTemplate = colorStreakQuotes[Math.floor(Math.random() * colorStreakQuotes.length)];
+                                        client.feedbackQuote = quoteTemplate.replace('{COLOR}', colorName);
                                         client.feedbackType = 'negative';
-                                        speak(client.feedbackQuote, 0.8, 0.9, client.voice, true); // Sad voice, immediate
-                                    } else {
-                                        client.feedbackQuote = positiveQuotes[Math.floor(Math.random() * positiveQuotes.length)];
-                                        client.feedbackType = 'positive';
-                                        speak(client.feedbackQuote, 1.2, 1.4, client.voice, true); // Excited voice, immediate
+                                        speak(client.feedbackQuote, 0.8, 1.2, client.voice, true);
                                     }
-                                } else {
-                                    Object.keys(colorStreak).forEach(key => { colorStreak[key] = 0; });
-                                    client.feedbackQuote = positiveQuotes[Math.floor(Math.random() * positiveQuotes.length)];
-                                    client.feedbackType = 'positive';
-                                    speak(client.feedbackQuote, 1.2, 1.4, client.voice, true); // Excited voice, immediate
+                                }
+
+                                if (!client.feedbackQuote) { // If not already set by color streak
+                                    if (points === 5) {
+                                        client.feedbackQuote = minimalReactionQuotes[Math.floor(Math.random() * minimalReactionQuotes.length)];
+                                        client.feedbackType = 'lukewarm';
+                                        speak(client.feedbackQuote, 0.9, 1.0, client.voice, true);
+                                    } else { // points are 10 or 15
+                                        let availablePositiveQuotes = [...positiveQuotes];
+                                        const rareQuote = "The worst thing I've ever seen. Approved.";
+                                        if (!rareQuoteUsed && Math.random() < 0.1) { // 10% chance
+                                            client.feedbackQuote = rareQuote;
+                                            rareQuoteUsed = true;
+                                        } else {
+                                            client.feedbackQuote = availablePositiveQuotes[Math.floor(Math.random() * availablePositiveQuotes.length)];
+                                        }
+                                        client.feedbackType = 'positive';
+                                        speak(client.feedbackQuote, 1.2, 1.4, client.voice, true);
+                                    }
                                 }
                             }
                             
+                            // Handle lukewarm streak
+                            if (points === 5) {
+                                lukewarmStreak++;
+                            } else {
+                                lukewarmStreak = 0;
+                            }
+
+                            if (lukewarmStreak === 2 && !hasShownLukewarmMessage) {
+                                hasShownLukewarmMessage = true;
+                                queuePopup(lukewarmMessageEl, 4000);
+                            }
+
                             score += points; 
                             vfxParticles.push({
                                 x: client.x + client.width / 2, y: client.y - 20,
@@ -1369,10 +1545,10 @@
                             successfulDesigns.push({ src: p.image.src, wasSpecial: fulfilledSpecial });
 
                             successfulDeliveries++;
+                            
                             if (successfulDeliveries === 5 && windStartTime === null) {
                                 windStartTime = time;
-                                windyMessageEl.style.display = 'block';
-                                setTimeout(() => { windyMessageEl.style.display = 'none'; }, 4000);
+                                queuePopup(windyMessageEl, 4000);
                             }
                             updateUI();
                         }
@@ -1383,6 +1559,17 @@
 
             // Check for reaching the AI server
             if (client.x + client.width >= ai.x) {
+                // Penalty for special request clients reaching AI (if they weren't already angry)
+                if (client.specialRequest && client.specialRequest.type !== 'impossible' && !client.isAngry) {
+                    score -= 10;
+                     vfxParticles.push({
+                        x: client.x + client.width / 2, y: client.y - 20,
+                        vy: -1, vx: 0,
+                        alpha: 1, life: 60, text: '-10', color: '#ff4141'
+                    });
+                    updateUI();
+                }
+
                 client.hasReachedAI = true;
                 client.isInvestigating = true;
                 client.isAngry = false; // Stop being angry
@@ -1405,48 +1592,31 @@
     
     // --- Drawing Functions ---
     function drawBackground() {
-        const gradient = internalCtx.createLinearGradient(0, 0, 0, INTERNAL_HEIGHT);
-        gradient.addColorStop(0, '#0c0a18');
-        gradient.addColorStop(1, '#2c244d');
-        internalCtx.fillStyle = gradient;
-        internalCtx.fillRect(0, 0, INTERNAL_WIDTH, INTERNAL_HEIGHT);
-
-        const skylineOffset = (parallaxOffset * 0.2) % INTERNAL_WIDTH;
-        for (let i = -1; i < 2; i++) {
-            const x = i * INTERNAL_WIDTH + skylineOffset;
-            internalCtx.fillStyle = '#1a142d';
-            internalCtx.fillRect(x + 50, INTERNAL_HEIGHT - 250, 80, 100);
-            internalCtx.fillRect(x + 200, INTERNAL_HEIGHT - 300, 120, 150);
-            internalCtx.fillRect(x + 400, INTERNAL_HEIGHT - 280, 90, 130);
-            internalCtx.fillRect(x + 600, INTERNAL_HEIGHT - 320, 150, 170);
-        }
-
-        const buildingsOffset = (parallaxOffset * 0.5) % INTERNAL_WIDTH;
-        for (let i = -1; i < 2; i++) {
-            const x = i * INTERNAL_WIDTH + buildingsOffset;
-            internalCtx.fillStyle = '#251e3e';
-            internalCtx.fillRect(x, INTERNAL_HEIGHT - 200, 200, 200);
-            internalCtx.fillRect(x + 300, INTERNAL_HEIGHT - 220, 150, 220);
-            internalCtx.fillRect(x + 550, INTERNAL_HEIGHT - 180, 250, 180);
+        if (isBackgroundLoaded) {
+            internalCtx.drawImage(backgroundImage, 0, 0, INTERNAL_WIDTH, INTERNAL_HEIGHT);
+        } else {
+            // Fallback to original procedural background if image fails to load
+            const gradient = internalCtx.createLinearGradient(0, 0, 0, INTERNAL_HEIGHT);
+            gradient.addColorStop(0, '#0c0a18');
+            gradient.addColorStop(1, '#2c244d');
+            internalCtx.fillStyle = gradient;
+            internalCtx.fillRect(0, 0, INTERNAL_WIDTH, INTERNAL_HEIGHT);
         }
     }
-
-    function drawBuilding() {
-        internalCtx.fillStyle = '#1f1a33';
-        internalCtx.fillRect(0, 0, INTERNAL_WIDTH, BUILDING_HEIGHT);
-        for(let x=0; x < INTERNAL_WIDTH; x += 20) {
-            internalCtx.strokeStyle = '#2a244a';
-            internalCtx.lineWidth = 1;
-            internalCtx.beginPath();
-            internalCtx.moveTo(x, 0);
-            internalCtx.lineTo(x, BUILDING_HEIGHT);
-            internalCtx.stroke();
-        }
-        internalCtx.fillStyle = '#2c244d';
-        internalCtx.fillRect(0, 40, INTERNAL_WIDTH, 90);
+    
+    function drawPaperVFX() {
+        paperVFX.forEach(p => {
+            internalCtx.save();
+            internalCtx.translate(p.x, p.y);
+            internalCtx.rotate(p.rotation);
+            internalCtx.fillStyle = `rgba(240, 240, 240, ${p.life / 60})`;
+            internalCtx.fillRect(-p.width/2, -p.height/2, p.width, p.height);
+            internalCtx.restore();
+        });
     }
 
     function drawWindowsAndDesigner() {
+        // Draw the restock paper stack in the first window
         const firstWindow = windows[0];
         if (firstWindow) {
             internalCtx.fillStyle = '#fff';
@@ -1461,43 +1631,50 @@
             internalCtx.rect(win.x, win.y, win.width, win.height);
             internalCtx.clip();
 
-            const glowAlpha = (Math.sin(gameTime / 300) * 0.2 + 0.5) * win.openState;
-            const grad = internalCtx.createRadialGradient(win.x + win.width/2, win.y + win.height/2, 0, win.x + win.width/2, win.y + win.height/2, win.width);
-            grad.addColorStop(0, `rgba(255, 165, 0, ${glowAlpha})`);
-            grad.addColorStop(1, 'rgba(255, 165, 0, 0)');
-            internalCtx.fillStyle = grad;
-            internalCtx.fillRect(win.x, win.y, win.width, win.height);
+            // Interior Glow (behind designer)
+            if (win.openState > 0) {
+                internalCtx.globalCompositeOperation = 'lighter'; // 'add' blend mode
+                const glowPulse = (Math.sin(gameTime / 400 + win.x / 100) + 1) / 2;
+                const glowAlpha = glowPulse * 0.7 * win.openState; // Glow fades with window, MORE OBVIOUS
+                const grad = internalCtx.createRadialGradient(win.x + win.width / 2, win.y + win.height / 2, 0, win.x + win.width / 2, win.y + win.height / 2, win.width * 0.7);
+                grad.addColorStop(0, `rgba(255, 255, 255, ${glowAlpha})`);
+                grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                internalCtx.fillStyle = grad;
+                internalCtx.fillRect(win.x, win.y, win.width, win.height);
+                internalCtx.globalCompositeOperation = 'source-over'; // reset
+            }
             
-            designer.draw(win.openState < 1);
+            designer.draw(win.openState < 1); // Draw designer (silhouetted if window is closing)
+            drawPaperVFX(); // Draw paper particles inside the clipped window area
             internalCtx.restore();
 
+            // Sliding shutter part
             const slideY = win.y - (win.height * win.openState);
-            internalCtx.fillStyle = win.color;
-            internalCtx.fillRect(win.x, slideY, win.width, win.height);
+            internalCtx.fillStyle = 'rgba(0, 7, 27, 0.7)'; // Semi-transparent dark blue shutter
+            // Draw a tall rectangle that starts from off-screen to ensure it always covers the top
+            internalCtx.fillRect(win.x, slideY - win.y, win.width, win.height + win.y);
         });
     }
 
-    function drawFramesAndDetails() {
-        windows.forEach(win => {
-            internalCtx.strokeStyle = '#4a0b48';
-            internalCtx.lineWidth = 4;
-            internalCtx.strokeRect(win.x, win.y, win.width, win.height);
-            internalCtx.fillStyle = '#333';
-            internalCtx.fillRect(win.x - 5, win.y + win.height + 5, win.width + 10, 15);
-            for(let j=0; j<5; j++) {
-                internalCtx.fillRect(win.x + j * (win.width/4), win.y + win.height + 5, 4, 15);
-            }
-        });
-    }
+function drawFramesAndDetails() {
+    internalCtx.strokeStyle = '#04010d';
+    internalCtx.lineWidth = 9;
+    internalCtx.lineCap = 'butt';
+
+    // Draw a single top border across the entire canvas width
+    internalCtx.beginPath();
+    internalCtx.moveTo(0, topMargin);
+    internalCtx.lineTo(INTERNAL_WIDTH, topMargin);
+    internalCtx.stroke();
+
+    // Draw a single bottom border across the entire canvas width
+    internalCtx.beginPath();
+    internalCtx.moveTo(0, topMargin + windowHeight);
+    internalCtx.lineTo(INTERNAL_WIDTH, topMargin + windowHeight);
+    internalCtx.stroke();
+}
     
-    function drawStreet() {
-        internalCtx.fillStyle = '#222';
-        internalCtx.fillRect(0, INTERNAL_HEIGHT - 40, INTERNAL_WIDTH, 40);
-        internalCtx.fillStyle = '#444';
-        internalCtx.fillRect(0, INTERNAL_HEIGHT - 40, INTERNAL_WIDTH, 10);
-    }
-    
-    function drawVFX() {
+    function drawScoreVFX() {
         vfxParticles.forEach(p => {
             internalCtx.globalAlpha = p.alpha;
             internalCtx.fillStyle = p.color || '#00ff00';
@@ -1505,15 +1682,6 @@
             internalCtx.textAlign = 'center';
             internalCtx.fillText(p.text, p.x, p.y);
             internalCtx.globalAlpha = 1;
-        });
-
-        paperVFX.forEach(p => {
-            internalCtx.save();
-            internalCtx.translate(p.x, p.y);
-            internalCtx.rotate(p.rotation);
-            internalCtx.fillStyle = `rgba(240, 240, 240, ${p.life / 60})`;
-            internalCtx.fillRect(-p.width/2, -p.height/2, p.width, p.height);
-            internalCtx.restore();
         });
     }
 
@@ -1533,14 +1701,12 @@
     function draw() {
         // Draw all game elements to the internal canvas
         drawBackground();
-        drawStreet();
         ai.draw();
-        drawBuilding();
         drawWindowsAndDesigner();
         drawFramesAndDetails();
         clients.forEach(c => c.draw(gameTime));
         projectiles.forEach(p => p.draw());
-        drawVFX();
+        drawScoreVFX();
         drawRain();
 
         // Scale the internal canvas to fit the display canvas
@@ -1549,6 +1715,33 @@
     }
 
     // --- UI and Game State Functions ---
+
+    function processPopupQueue() {
+        if (isPopupActive || popupQueue.length === 0) {
+            return;
+        }
+
+        isPopupActive = true;
+        const { element, duration } = popupQueue.shift();
+
+        element.style.display = 'block';
+        setTimeout(() => {
+            element.style.display = 'none';
+            isPopupActive = false;
+            processPopupQueue(); // Check for the next popup in the queue
+        }, duration);
+    }
+
+    function queuePopup(element, duration, isPriority = false) {
+        const item = { element, duration };
+        if (isPriority) {
+            popupQueue.unshift(item); // Add to the front of the queue
+        } else {
+            popupQueue.push(item); // Add to the back of the queue
+        }
+        processPopupQueue();
+    }
+
     function updateUI() { 
         scoreEl.textContent = `Score: ${score}`; 
         topScoreEl.textContent = `HI-SCORE: ${topScore} ${topScoreName}`;
@@ -1573,17 +1766,32 @@
     function gameOver() {
         if (isGameOver) return; // Prevent multiple calls
         isGameOver = true;
-        if(sound.isStarted) sound.gameOver.triggerAttackRelease("C3", "1n");
+        
+        // Stop all sounds except the main music (for now)
+        Object.values(sound).forEach(sfx => {
+            if (sfx && typeof sfx.triggerRelease === 'function') {
+                sfx.triggerRelease();
+            }
+        });
+        sound.rain.stop();
+        synth.cancel();
+        speechQueue = [];
+
+        // Instantly start game over music
+        if(!Tone.Master.mute) gameOverMusicPlayer.start();
+
+        // After a delay, fade out background music and show the screen
+        setTimeout(() => {
+            backgroundMusicPlayer.volume.rampTo(-Infinity, 0.5);
+            showGameOverScreen();
+        }, 500);
+
         instructionMessageEl.style.display = 'none';
         drawHereMessageEl.style.display = 'none';
-        synth.cancel(); // Clear any pending speech
-        speechQueue = [];
 
         // Clear projectiles and non-investigating clients
         projectiles = [];
         clients = clients.filter(c => c.isInvestigating);
-
-        showGameOverScreen();
     }
 
     async function showGameOverScreen() {
@@ -1685,6 +1893,8 @@
                 setTimeout(() => {
                     restockMessageEl.style.display = 'none';
                 }, 3000);
+            } else {
+                 if(sound.isStarted) sound.outOfPaper.triggerAttackRelease("A2", "16n");
             }
             return;
         }
@@ -1786,7 +1996,7 @@
                 const totalPixels = canvasWidth * canvasHeight;
                 const density = drawnPixels / totalPixels;
                 if (request.detail === 'dense') return density > 0.20; // 20% filled
-                if (request.detail === 'minimal') return density < 0.05; // 5% filled
+                if (request.detail === 'minimal') return density < 0.08; // 8% filled
                 break;
             case 'color':
                 const colorIndexMap = {'#00ffff': 0, '#ff00ff': 2, '#ffc300': 3};
@@ -1795,7 +2005,7 @@
             case 'color_combo':
                 return usedColors.size === 2 && usedColors.has(request.detail[0]) && usedColors.has(request.detail[1]);
             case 'zone':
-                return isZoneEmpty(imageDataObject, request.detail);
+                return isZoneEmpty(imageDataObject, zone);
             case 'impossible':
                 return false; 
         }
@@ -1837,6 +2047,8 @@
         const q = query(scoresCollectionRef, orderBy("score", "desc"), limit(10));
         const querySnapshot = await getDocs(q);
         listElement.innerHTML = '';
+        
+        let scoreCount = 0;
         querySnapshot.forEach(doc => {
             const data = doc.data();
             const li = document.createElement('li');
@@ -1845,7 +2057,15 @@
                 li.classList.add('highlight');
             }
             listElement.appendChild(li);
+            scoreCount++;
         });
+
+        for (let i = scoreCount; i < 10; i++) {
+            const li = document.createElement('li');
+            li.textContent = `DVA: 0`;
+            listElement.appendChild(li);
+        }
+
         leaderboardContainer.style.display = 'flex';
     }
 
@@ -1950,28 +2170,71 @@
     }
     window.addEventListener('resize', resizeCanvas);
 
+    // --- Start Screen Animation ---
+    let startScreenAnimationId;
+    function animateStartScreen() {
+        const rect = startScreenCanvas.getBoundingClientRect();
+        startScreenCanvas.width = rect.width;
+        startScreenCanvas.height = rect.height;
+
+        startScreenCtx.clearRect(0, 0, startScreenCanvas.width, startScreenCanvas.height);
+        startScreenCtx.strokeStyle = 'rgba(174,194,224,0.5)';
+        startScreenCtx.lineWidth = 1;
+        startScreenCtx.lineCap = 'round';
+
+        startScreenRaindrops.forEach(r => {
+            r.y += r.speed;
+            if (r.y > startScreenCanvas.height) {
+                r.y = -r.length;
+                r.x = Math.random() * startScreenCanvas.width;
+            }
+            startScreenCtx.beginPath();
+            startScreenCtx.moveTo(r.x, r.y);
+            startScreenCtx.lineTo(r.x, r.y + r.length);
+            startScreenCtx.stroke();
+        });
+
+        startScreenAnimationId = requestAnimationFrame(animateStartScreen);
+    }
+
     // --- Initial Start ---
     startScreen.addEventListener('click', async (e) => {
-        startScreen.style.display = 'none';
+        // A single click will now handle everything.
+        
+        // 1. Start the audio context if it hasn't been started yet.
         if (!sound.isStarted) {
             await Tone.start();
             sound.isStarted = true;
-            sound.rain.start();
-            
-            const notes = ["C2", null, "Eb2", "G2", "Bb2", "G2", "Eb2", null, "F2", null, "Ab2", "C3", "Bb2", "Ab2", "F2", null];
-            let index = 0;
-            musicLoop = new Tone.Loop(time => {
-                let note = notes[index % notes.length];
-                if (note) {
-                    sound.music.triggerAttackRelease(note, "8n", time);
-                }
-                index++;
-            }, "8n").start(0);
+            // Pre-load the game over music after the background music is ready
+            await Tone.loaded();
+        }
+
+        // 2. Stop the start screen animation and hide the screen.
+        cancelAnimationFrame(startScreenAnimationId);
+        startScreen.style.display = 'none';
+        
+        // 3. Start the rain sound effect.
+        sound.rain.start();
+        
+        // 4. Ensure the transport is running.
+        if (Tone.Transport.state !== 'started') {
             Tone.Transport.start();
         }
-        init();
-    });
 
+        // 5. Initialize the game (which now also handles starting the title music).
+        init();
+    }, { once: true }); // Use { once: true } to ensure this only runs once.
+
+    // --- Setup on Load ---
+    for (let i = 0; i < 400; i++) {
+        startScreenRaindrops.push({
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight,
+            length: Math.random() * 20 + 10,
+            speed: Math.random() * 5 + 2
+        });
+    }
+    animateStartScreen();
     setupFirebase();
     resizeCanvas(); // Initial call to set the UI scale
 
