@@ -291,6 +291,27 @@
             margin-bottom: 10px;
             text-decoration: underline;
         }
+        #loading-container {
+            width: 250px;
+            height: 20px;
+            border: 2px solid #00ffcc;
+            border-radius: 5px;
+            padding: 3px;
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+        }
+        #loading-bar {
+            width: 0%;
+            height: 100%;
+            background-color: #00ffcc;
+            border-radius: 2px;
+            box-shadow: 0 0 15px #00ffcc;
+            animation: loading-animation 2.5s ease-out forwards;
+        }
+        @keyframes loading-animation {
+            0% { width: 0%; }
+            90% { width: 90%; }
+            100% { width: 100%; }
+        }
         #game-over-wrapper {
             position: absolute;
             top: 0; left: 0;
@@ -487,9 +508,9 @@
         </div>
         <div id="instruction-message" class="game-message">Move with A & D<br>Press SPACE to drop your design</div>
         <div id="draw-here-message" class="game-message">&lt;-- DRAW HERE</div>
-        <div id="restock-message" class="game-message">Restock paper!</div>
+        <div id="restock-message" class="game-message">Restock<br>paper!</div>
         <div id="windy-message" class="game-message">It's getting windy!</div>
-        <div id="lukewarm-message" class="game-message">Try drawing more for a better<br>client reaction, and more points!</div>
+        <div id="lukewarm-message" class="game-message">Try filling more of the page for a<br>better client reaction, and more points!</div>
         <div id="special-request-message" class="game-message">Deliver client requests (<span style="color: #ffff00;">yellow text</span>)<br>or risk pushing them towards AI</div>
         <div id="copied-message" class="game-message" style="border-color: #ffff00; color: #ffff00;">Image Saved!</div>
         <div id="game-over-wrapper">
@@ -519,7 +540,10 @@
                     <h3>HI-SCORES</h3>
                     <ol id="start-screen-list" class="leaderboard-ol"><li>Loading...</li></ol>
                 </div>
-                <span id="start-prompt">Click to Start</span>
+                <div id="loading-container">
+                    <div id="loading-bar"></div>
+                </div>
+                <span id="start-prompt" style="display: none;">Click to Start</span>
             </div>
         </div>
         <div id="mute-button">
@@ -578,6 +602,7 @@
     const startScreen = document.getElementById('start-screen');
     const startScreenListEl = document.getElementById('start-screen-list');
     const startPromptEl = document.getElementById('start-prompt');
+    const loadingContainer = document.getElementById('loading-container');
     const muteButton = document.getElementById('mute-button');
     const soundOnIcon = document.getElementById('sound-on-icon');
     const soundOffIcon = document.getElementById('sound-off-icon');
@@ -707,7 +732,6 @@
     let hasShownFirstRestockMessage = false;
     let hasShownSpecialRequestMessage = false;
     let hasShownLukewarmMessage = false;
-    let lukewarmStreak = 0;
     let lastSubmittedScoreTimestamp = null;
     let totalClientsSpawned = 0;
     let windStrength = 0;
@@ -720,6 +744,7 @@
     let rareQuoteUsed = false;
     let isPopupActive = false;
     let popupQueue = [];
+    let isGameLoaded = false;
 
     const inkColors = ['#00ffff', '#20c2a8', '#ff00ff', '#ffc300', '#ff7f50', '#0000ff', '#00ff00']; // Updated yellow
     const pencilColors = { // Map pencil elements to main color array indices
@@ -1273,7 +1298,6 @@ internalCtx.restore();
         hasShownFirstRestockMessage = false;
         hasShownSpecialRequestMessage = false;
         hasShownLukewarmMessage = false;
-        lukewarmStreak = 0;
         popupQueue = [];
         isPopupActive = false;
         totalClientsSpawned = 0;
@@ -1482,7 +1506,6 @@ internalCtx.restore();
                             client.feedbackQuote = negativeQuotes[Math.floor(Math.random() * negativeQuotes.length)];
                             speak(client.feedbackQuote, 0.8, 0.9, client.voice, true);
                             score -= 10;
-                            lukewarmStreak = 0; // Reset streak on negative outcome
                             vfxParticles.push({
                                 x: client.x + client.width / 2, y: client.y - 20,
                                 vy: -1, vx: 0,
@@ -1564,14 +1587,8 @@ internalCtx.restore();
                                 }
                             }
                             
-                            // Handle lukewarm streak
-                            if (points === 5) {
-                                lukewarmStreak++;
-                            } else {
-                                lukewarmStreak = 0;
-                            }
-
-                            if (lukewarmStreak === 3 && !hasShownLukewarmMessage) {
+                            // Handle lukewarm tutorial popup
+                            if (points === 5 && !hasShownLukewarmMessage) {
                                 hasShownLukewarmMessage = true;
                                 queuePopup(lukewarmMessageEl, 4000);
                             }
@@ -1743,9 +1760,9 @@ function drawFramesAndDetails() {
         drawBackground();
         drawWindowsAndDesigner();
         drawFramesAndDetails();
-        ai.draw();
         clients.forEach(c => c.draw(gameTime));
         projectiles.forEach(p => p.draw());
+        ai.draw();
         drawScoreVFX();
         drawRain();
 
@@ -2242,6 +2259,8 @@ function drawFramesAndDetails() {
 
     // --- Initial Start ---
     startScreen.addEventListener('click', async (e) => {
+        if (!isGameLoaded) return;
+
         if (!sound.isStarted) {
             await Tone.start();
             sound.isStarted = true;
@@ -2253,7 +2272,7 @@ function drawFramesAndDetails() {
             Tone.Transport.start();
         }
         init();
-    }, { once: true });
+    });
 
     // --- Setup on Load ---
     for (let i = 0; i < 400; i++) {
@@ -2267,6 +2286,14 @@ function drawFramesAndDetails() {
     animateStartScreen();
     setupFirebase();
     resizeCanvas(); // Initial call to set the UI scale
+
+    Tone.loaded().then(() => {
+        setTimeout(() => {
+            loadingContainer.style.display = 'none';
+            startPromptEl.style.display = 'block';
+            isGameLoaded = true;
+        }, 500); 
+    });
 
 </script>
 </body>
