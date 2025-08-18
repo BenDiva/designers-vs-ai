@@ -186,6 +186,16 @@
             box-shadow: 0 0 10px #fff;
         }
 
+        .lighting-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 15; /* High z-index to be on top */
+        }
+
 
         #ui-container {
             position: absolute;
@@ -347,7 +357,7 @@
             flex-direction: column;
             gap: 10px;
             background: #111;
-            padding: 10px 10px 15px 10px; /* Added bottom padding */
+            padding: 10px 10px 25px 10px; /* Added bottom padding */
             border-radius: 5px;
         }
         #portfolio-container h3, #leaderboard-container h3 {
@@ -529,7 +539,7 @@
     const gameCanvas = document.getElementById('game-canvas');
     const gameCtx = gameCanvas.getContext('2d');
     const drawingCanvas = document.getElementById('drawing-paper');
-    const drawingCtx = drawingCanvas.getContext('2d');
+    const drawingCtx = drawingCanvas.getContext('2d', { willReadFrequently: true });
     const startScreenCanvas = document.getElementById('start-screen-canvas');
     const startScreenCtx = startScreenCanvas.getContext('2d');
     
@@ -1025,6 +1035,25 @@
         draw() {
             const clientX = this.x; const clientY = this.y + this.walkBob;
             
+            // --- ADD SHADOW ---
+            internalCtx.save();
+            internalCtx.fillStyle = 'rgba(0, 4, 28, 0.4)';
+            internalCtx.shadowColor = '#00041c';
+            internalCtx.shadowBlur = 15;
+            internalCtx.beginPath();
+            const shadowBaseY = clientY + this.height;
+            const shadowTipY = INTERNAL_HEIGHT + 50; // Go off screen
+            const shadowBaseWidth = this.width * 0.9; // Made wider
+            const shadowTipWidth = this.width * 1.8; // Made wider
+
+            internalCtx.moveTo(clientX + (this.width - shadowBaseWidth) / 2, shadowBaseY);
+            internalCtx.lineTo(clientX + (this.width - shadowTipWidth) / 2, shadowTipY);
+            internalCtx.lineTo(clientX + (this.width + shadowTipWidth) / 2, shadowTipY);
+            internalCtx.lineTo(clientX + (this.width + shadowBaseWidth) / 2, shadowBaseY);
+            internalCtx.closePath();
+            internalCtx.fill();
+            internalCtx.restore();
+
             // --- DRAW THE BASE CLIENT (FULLY OPAQUE) ---
             internalCtx.fillStyle = this.clothingColor;
             internalCtx.beginPath();
@@ -1110,7 +1139,7 @@
                 internalCtx.globalCompositeOperation = 'source-atop';
                 const pRedTint = 10 * paperLightIntensity;
                 const pBlueTint = 20 * (1 - paperLightIntensity);
-                const pBrightness = 0.6 + (0.4 * paperLightIntensity);
+                const pBrightness = 0.75 + (0.4 * paperLightIntensity);
                 internalCtx.fillStyle = `rgba(${pRedTint}, 0, ${pBlueTint}, ${1 - pBrightness})`;
                 internalCtx.fillRect(paperX, paperY, 40, 40);
                 internalCtx.globalCompositeOperation = 'source-over';
@@ -1148,7 +1177,7 @@
             internalCtx.globalCompositeOperation = 'source-atop';
             const redTint = 10 * lightIntensity;
             const blueTint = 20 * (1 - lightIntensity);
-            const brightness = 0.6 + (0.4 * lightIntensity);
+            const brightness = 0.75 + (0.4 * lightIntensity);
             internalCtx.fillStyle = `rgba(${redTint}, 0, ${blueTint}, ${1 - brightness})`;
             internalCtx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height);
             internalCtx.globalCompositeOperation = 'source-over';
@@ -1205,15 +1234,28 @@
                 const radius = 8;
                 if (i < this.breaches) {
                     // This light is ON
-                    internalCtx.save();
-                    internalCtx.globalCompositeOperation = 'soft-light';
-                    internalCtx.fillStyle = 'rgba(255, 0, 0, 1)';
-                    internalCtx.shadowColor = '#ff0000';
-                    internalCtx.shadowBlur = 25;
-                    internalCtx.beginPath();
-                    internalCtx.arc(lightX, lightY, radius, 0, Math.PI * 2);
-                    internalCtx.fill();
-                    internalCtx.restore();
+                  // This light is ON
+internalCtx.save();
+internalCtx.globalCompositeOperation = 'linear-dodge';
+internalCtx.fillStyle = 'rgba(255, 0, 0, 0.4)';
+internalCtx.shadowColor = '#ff0000';
+internalCtx.shadowBlur = 25;
+internalCtx.beginPath();
+internalCtx.arc(lightX, lightY, radius, 0, Math.PI * 2);
+internalCtx.fill();
+
+// --- NEW CODE FOR THE INNER WHITE GLOW ---
+const gradient = internalCtx.createRadialGradient(lightX, lightY, 0, lightX, lightY, radius / 2);
+gradient.addColorStop(0, 'rgba(255, 255, 255, 1)'); // Bright center
+gradient.addColorStop(1, 'rgba(255, 200, 200, 0.0)');   // Fades to transparent
+
+internalCtx.fillStyle = gradient;
+internalCtx.beginPath();
+internalCtx.arc(lightX, lightY, radius / 0.1, 0, Math.PI * 2);
+internalCtx.fill();
+// --- END OF NEW CODE ---
+
+internalCtx.restore();
                 }
                 // If the light is 'off', do nothing to make it invisible.
             }
@@ -1246,14 +1288,12 @@
         rareQuoteUsed = false;
         
         gameOverMusicPlayer.stop();
-        if (backgroundMusicPlayer.state !== 'started') {
+        backgroundMusicPlayer.volume.value = -10;
+        if (sound.isStarted) {
+            backgroundMusicPlayer.stop();
             backgroundMusicPlayer.start();
-        } else {
-            backgroundMusicPlayer.seek(0);
         }
-        backgroundMusicPlayer.volume.value = -10; // Reset volume on restart
-
-
+       
         resizeCanvas();
         designer = new Designer(INTERNAL_WIDTH / 1.9 - DESIGNER_WIDTH / 2, BUILDING_HEIGHT - DESIGNER_HEIGHT - 22); // Moved down 3px
         ai = new AI(INTERNAL_WIDTH - AI_WIDTH - 20, INTERNAL_HEIGHT - AI_HEIGHT - 14); // Match client baseline
@@ -1531,7 +1571,7 @@
                                 lukewarmStreak = 0;
                             }
 
-                            if (lukewarmStreak === 2 && !hasShownLukewarmMessage) {
+                            if (lukewarmStreak === 3 && !hasShownLukewarmMessage) {
                                 hasShownLukewarmMessage = true;
                                 queuePopup(lukewarmMessageEl, 4000);
                             }
@@ -1701,9 +1741,9 @@ function drawFramesAndDetails() {
     function draw() {
         // Draw all game elements to the internal canvas
         drawBackground();
-        ai.draw();
         drawWindowsAndDesigner();
         drawFramesAndDetails();
+        ai.draw();
         clients.forEach(c => c.draw(gameTime));
         projectiles.forEach(p => p.draw());
         drawScoreVFX();
@@ -1720,6 +1760,10 @@ function drawFramesAndDetails() {
         if (isPopupActive || popupQueue.length === 0) {
             return;
         }
+
+        // Hide initial tutorials if they are still visible
+        instructionMessageEl.style.display = 'none';
+        drawHereMessageEl.style.display = 'none';
 
         isPopupActive = true;
         const { element, duration } = popupQueue.shift();
@@ -1777,12 +1821,10 @@ function drawFramesAndDetails() {
         synth.cancel();
         speechQueue = [];
 
-        // Instantly start game over music
         if(!Tone.Master.mute) gameOverMusicPlayer.start();
 
-        // After a delay, fade out background music and show the screen
         setTimeout(() => {
-            backgroundMusicPlayer.volume.rampTo(-Infinity, 0.5);
+            backgroundMusicPlayer.stop();
             showGameOverScreen();
         }, 500);
 
@@ -1803,6 +1845,7 @@ function drawFramesAndDetails() {
         } else {
             highscoreInputContainer.style.display = 'none';
             restartButton.style.display = 'block';
+            portfolioContainer.style.display = 'flex';
             await showLeaderboard(leaderboardList);
         }
 
@@ -1825,7 +1868,7 @@ function drawFramesAndDetails() {
             if (design.wasSpecial) {
                 const medal = document.createElement('div');
                 medal.className = 'medal-icon';
-                medal.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="#FFD700"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15l-3.5-3.5 1.41-1.41L11 14.17l5.59-5.59L18 10l-7 7z"></path></svg>`;
+                medal.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24"><path fill="#FFD700" stroke="#F9A825" stroke-width="1.5" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"></path><path fill="#F9A825" d="M9.5,16.2L5.3,12l-1.4,1.4L9.5,19L21.5,7l-1.4-1.4L9.5,16.2z"></path></svg>`;
                 medal.style.display = 'block';
                 div.appendChild(medal);
             }
@@ -2005,7 +2048,7 @@ function drawFramesAndDetails() {
             case 'color_combo':
                 return usedColors.size === 2 && usedColors.has(request.detail[0]) && usedColors.has(request.detail[1]);
             case 'zone':
-                return isZoneEmpty(imageDataObject, zone);
+                return isZoneEmpty(imageDataObject, request.detail);
             case 'impossible':
                 return false; 
         }
@@ -2199,31 +2242,18 @@ function drawFramesAndDetails() {
 
     // --- Initial Start ---
     startScreen.addEventListener('click', async (e) => {
-        // A single click will now handle everything.
-        
-        // 1. Start the audio context if it hasn't been started yet.
         if (!sound.isStarted) {
             await Tone.start();
             sound.isStarted = true;
-            // Pre-load the game over music after the background music is ready
-            await Tone.loaded();
         }
-
-        // 2. Stop the start screen animation and hide the screen.
         cancelAnimationFrame(startScreenAnimationId);
         startScreen.style.display = 'none';
-        
-        // 3. Start the rain sound effect.
         sound.rain.start();
-        
-        // 4. Ensure the transport is running.
         if (Tone.Transport.state !== 'started') {
             Tone.Transport.start();
         }
-
-        // 5. Initialize the game (which now also handles starting the title music).
         init();
-    }, { once: true }); // Use { once: true } to ensure this only runs once.
+    }, { once: true });
 
     // --- Setup on Load ---
     for (let i = 0; i < 400; i++) {
