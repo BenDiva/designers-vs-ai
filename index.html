@@ -205,6 +205,7 @@
             font-size: 16px;
             color: #00ffcc;
             text-shadow: 0 0 5px #00ffcc, 0 0 10px #00ffcc;
+            padding-right: 10px;
         }
         .game-message {
             position: absolute;
@@ -250,11 +251,15 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: url('https://raw.githubusercontent.com/BenDiva/designers-vs-ai/main/assets/start-screen-bg.jpg');
+            background-color: #0c0a18;
             background-size: cover;
             background-position: center;
             display: flex;
             z-index: 200;
+            cursor: not-allowed;
+            transition: background-image 0.5s ease-in-out;
+        }
+        #start-screen.loaded {
             cursor: pointer;
         }
         #start-screen-canvas {
@@ -275,7 +280,7 @@
             font-size: 24px;
             color: #fff;
             text-shadow: 0 0 10px #00ffcc;
-            padding: 40px 0;
+            padding: 40px 0 26px 0;
         }
         #start-screen-leaderboard {
             font-size: 12px;
@@ -285,11 +290,19 @@
             background: rgba(0,0,0,0.6);
             width: 320px;
             text-align: center;
-            margin-top: 220px; /* Pushes the leaderboard down */
+            margin-top: 260px; /* Pushes the leaderboard down */
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
         }
         #start-screen-leaderboard h3 {
             margin-bottom: 10px;
             text-decoration: underline;
+        }
+        #start-prompt-area {
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         #loading-container {
             width: 250px;
@@ -381,11 +394,15 @@
             padding: 10px 10px 25px 10px; /* Added bottom padding */
             border-radius: 5px;
         }
-        #portfolio-container h3, #leaderboard-container h3 {
+        #portfolio-container h3 {
             font-size: 18px;
             color: #00ffcc;
             margin-bottom: 5px;
             width: 100%;
+        }
+        #leaderboard-container h3 {
+            margin-bottom: 10px;
+            text-decoration: underline;
         }
         #portfolio-images {
             display: flex;
@@ -458,12 +475,13 @@
         }
         #mute-button {
             position: absolute;
-            bottom: 10px;
-            left: 10px;
+            bottom: 15px;
+            left: 8px;
             width: 40px;
             height: 40px;
-            background: rgba(0,0,0,0.5);
-            border: 2px solid #00ffcc;
+            padding: 8px;
+            background: rgba(0,0,0,0.0);
+            border: 0px solid #00ffcc;
             border-radius: 5px;
             cursor: pointer;
             display: flex;
@@ -540,10 +558,12 @@
                     <h3>HI-SCORES</h3>
                     <ol id="start-screen-list" class="leaderboard-ol"><li>Loading...</li></ol>
                 </div>
-                <div id="loading-container">
-                    <div id="loading-bar"></div>
+                <div id="start-prompt-area">
+                    <div id="loading-container">
+                        <div id="loading-bar"></div>
+                    </div>
+                    <span id="start-prompt" style="display: none;">Click to Start</span>
                 </div>
-                <span id="start-prompt" style="display: none;">Click to Start</span>
             </div>
         </div>
         <div id="mute-button">
@@ -576,10 +596,9 @@
 
     // --- Asset Loading ---
     const backgroundImage = new Image();
-    let isBackgroundLoaded = false;
-    backgroundImage.onload = () => { isBackgroundLoaded = true; };
-    backgroundImage.onerror = () => { console.error("Failed to load background image."); };
     backgroundImage.src = 'https://raw.githubusercontent.com/BenDiva/designers-vs-ai/main/assets/background.jpg';
+    const startScreenImage = new Image();
+    startScreenImage.src = 'https://raw.githubusercontent.com/BenDiva/designers-vs-ai/main/assets/start-screen-bg.jpg';
 
 
     const scoreEl = document.getElementById('score');
@@ -600,6 +619,7 @@
     const initialsInput = document.getElementById('initials-input');
     const submitScoreButton = document.getElementById('submit-score-button');
     const startScreen = document.getElementById('start-screen');
+    const startScreenLeaderboardEl = document.getElementById('start-screen-leaderboard');
     const startScreenListEl = document.getElementById('start-screen-list');
     const startPromptEl = document.getElementById('start-prompt');
     const loadingContainer = document.getElementById('loading-container');
@@ -629,10 +649,19 @@
       appId: "1:503158591070:web:145b1e4eb8c63036726ecf"
     };
 
+    let scoresLoadedResolve;
+    const scoresLoadedPromise = new Promise(resolve => {
+        scoresLoadedResolve = resolve;
+    });
+
     async function setupFirebase() {
         if (!firebaseConfig.apiKey) {
             console.log("Firebase config not found. High scores will be local.");
             startScreenListEl.innerHTML = '<li>Local Mode</li>';
+            if (scoresLoadedResolve) {
+                scoresLoadedResolve();
+                scoresLoadedResolve = null;
+            }
             return;
         }
         try {
@@ -673,14 +702,26 @@
                 }
 
                 updateUI();
+                if (scoresLoadedResolve) {
+                    scoresLoadedResolve();
+                    scoresLoadedResolve = null; 
+                }
             }, (error) => {
                 console.error("Error with snapshot listener:", error);
                 startScreenListEl.innerHTML = '<li>Error loading scores</li>';
+                if (scoresLoadedResolve) {
+                    scoresLoadedResolve();
+                    scoresLoadedResolve = null;
+                }
             });
 
         } catch (error) {
             console.error("Error initializing Firebase:", error);
             startScreenListEl.innerHTML = '<li>Error loading scores</li>';
+            if (scoresLoadedResolve) {
+                scoresLoadedResolve();
+                scoresLoadedResolve = null;
+            }
         }
     }
 
@@ -1649,7 +1690,7 @@ internalCtx.restore();
     
     // --- Drawing Functions ---
     function drawBackground() {
-        if (isBackgroundLoaded) {
+        if (backgroundImage.complete && backgroundImage.naturalHeight !== 0) {
             internalCtx.drawImage(backgroundImage, 0, 0, INTERNAL_WIDTH, INTERNAL_HEIGHT);
         } else {
             // Fallback to original procedural background if image fails to load
@@ -1760,9 +1801,9 @@ function drawFramesAndDetails() {
         drawBackground();
         drawWindowsAndDesigner();
         drawFramesAndDetails();
+        ai.draw();
         clients.forEach(c => c.draw(gameTime));
         projectiles.forEach(p => p.draw());
-        ai.draw();
         drawScoreVFX();
         drawRain();
 
@@ -2287,12 +2328,27 @@ function drawFramesAndDetails() {
     setupFirebase();
     resizeCanvas(); // Initial call to set the UI scale
 
-    Tone.loaded().then(() => {
-        setTimeout(() => {
-            loadingContainer.style.display = 'none';
-            startPromptEl.style.display = 'block';
-            isGameLoaded = true;
-        }, 500); 
+    const imageLoadPromise = new Promise((resolve) => {
+        if (startScreenImage.complete) {
+            resolve();
+        } else {
+            startScreenImage.onload = () => {
+                resolve();
+            };
+            startScreenImage.onerror = () => {
+                console.error("Failed to load start screen image.");
+                resolve(); // Resolve anyway so the game doesn't hang
+            };
+        }
+    });
+
+    Promise.all([imageLoadPromise, Tone.loaded(), scoresLoadedPromise]).then(() => {
+        isGameLoaded = true;
+        startScreen.style.backgroundImage = `url('${startScreenImage.src}')`;
+        startScreenLeaderboardEl.style.opacity = 1;
+        loadingContainer.style.display = 'none';
+        startPromptEl.style.display = 'block';
+        startScreen.classList.add('loaded');
     });
 
 </script>
