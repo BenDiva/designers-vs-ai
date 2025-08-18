@@ -220,9 +220,15 @@
             display: none;
             z-index: 100;
         }
-        #restock-message, #windy-message, #lukewarm-message {
+        #windy-message, #lukewarm-message {
             top: 35%;
             left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #restock-message {
+            top: 35%;
+            left: 7.5%;
             transform: translate(-50%, -50%);
         }
 
@@ -409,8 +415,6 @@
             flex-wrap: wrap;
             gap: 10px;
             justify-content: center;
-            overflow: hidden; /* Changed from auto/scroll */
-            max-height: 230px; 
         }
         .portfolio-item {
             position: relative;
@@ -475,8 +479,8 @@
         }
         #mute-button {
             position: absolute;
-            bottom: 15px;
-            left: 8px;
+            bottom: 13px;
+            left: 3px;
             width: 40px;
             height: 40px;
             padding: 8px;
@@ -567,8 +571,8 @@
             </div>
         </div>
         <div id="mute-button">
-            <svg id="sound-on-icon" width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path></svg>
-            <svg id="sound-off-icon" width="24" height="24" viewBox="0 0 24 24" fill="white" style="display: none;"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"></path></svg>
+            <svg id="sound-on-icon" width="24" height="24" viewBox="0 0 24 24" fill="white" fill-opacity="0.3"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path></svg>
+            <svg id="sound-off-icon" width="24" height="24" viewBox="0 0 24 24" fill="white" fill-opacity="0.15" style="display: none;"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"></path></svg>
         </div>
     </div>
 </div>
@@ -731,7 +735,9 @@
     const sound = {
         isStarted: false,
         drop: new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.1 } }).toDestination(),
-        success: new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.1 } }).toDestination(),
+        success15pt: new Tone.PolySynth(Tone.Synth, { oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.1 } }).toDestination(),
+        success10pt: new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.1 } }).toDestination(),
+        success5pt: new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.15, sustain: 0, release: 0.1 } }).toDestination(),
         fail: new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.1 } }).toDestination(),
         noDrop: new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.02, decay: 0.2, sustain: 0, release: 0.1 } }).toDestination(),
         restock: new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.01, decay: 0.15, sustain: 0, release: 0.1 } }).toDestination(),
@@ -1131,9 +1137,25 @@
             internalCtx.fill();
             internalCtx.fillStyle = this.skinColor;
             internalCtx.fillRect(clientX + 10, clientY, this.width - 20, 20);
-            internalCtx.fillStyle = '#5a3d2b';
-            internalCtx.fillRect(clientX + 5, clientY - 2, this.width - 10, 5);
-            internalCtx.fillRect(clientX + 8, clientY - 8, this.width - 16, 8);
+            
+            if (this.specialRequest) {
+                internalCtx.fillStyle = '#ffff00';
+                internalCtx.beginPath();
+                internalCtx.moveTo(clientX + 8, clientY - 2);
+                internalCtx.lineTo(clientX + 8, clientY - 12);
+                internalCtx.lineTo(clientX + 16, clientY - 8);
+                internalCtx.lineTo(clientX + 22, clientY - 16);
+                internalCtx.lineTo(clientX + 28, clientY - 8);
+                internalCtx.lineTo(clientX + 36, clientY - 12);
+                internalCtx.lineTo(clientX + 36, clientY - 2);
+                internalCtx.closePath();
+                internalCtx.fill();
+            } else {
+                internalCtx.fillStyle = '#5a3d2b';
+                internalCtx.fillRect(clientX + 5, clientY - 2, this.width - 10, 5);
+                internalCtx.fillRect(clientX + 8, clientY - 8, this.width - 16, 8);
+            }
+
 
             // --- SUBTLE LIGHTING AND TINTING ---
             const NEON_SIGN_X = INTERNAL_WIDTH * 0.55;
@@ -1159,8 +1181,23 @@
             internalCtx.closePath();
             internalCtx.fill();
             internalCtx.fillRect(clientX + 10, clientY, this.width - 20, 20);
-            internalCtx.fillRect(clientX + 5, clientY - 2, this.width - 10, 5);
-            internalCtx.fillRect(clientX + 8, clientY - 8, this.width - 16, 8);
+            
+            if (this.specialRequest) {
+                internalCtx.beginPath();
+                internalCtx.moveTo(clientX + 8, clientY - 2);
+                internalCtx.lineTo(clientX + 8, clientY - 12);
+                internalCtx.lineTo(clientX + 16, clientY - 8);
+                internalCtx.lineTo(clientX + 22, clientY - 16);
+                internalCtx.lineTo(clientX + 28, clientY - 8);
+                internalCtx.lineTo(clientX + 36, clientY - 12);
+                internalCtx.lineTo(clientX + 36, clientY - 2);
+                internalCtx.closePath();
+                internalCtx.fill();
+            } else {
+                internalCtx.fillRect(clientX + 5, clientY - 2, this.width - 10, 5);
+                internalCtx.fillRect(clientX + 8, clientY - 8, this.width - 16, 8);
+            }
+
 
             internalCtx.globalCompositeOperation = 'source-over';
             
@@ -1355,8 +1392,9 @@ internalCtx.restore();
         gameOverMusicPlayer.stop();
         backgroundMusicPlayer.volume.value = -10;
         if (sound.isStarted) {
-            backgroundMusicPlayer.stop();
-            backgroundMusicPlayer.start();
+            if (backgroundMusicPlayer.state !== 'started') {
+                backgroundMusicPlayer.start();
+            }
         }
        
         resizeCanvas();
@@ -1545,6 +1583,7 @@ internalCtx.restore();
                             client.isCaught = false; // Important: this allows the angry state to take over
                             client.isAngry = true;
                             client.feedbackQuote = negativeQuotes[Math.floor(Math.random() * negativeQuotes.length)];
+                            if(sound.isStarted) sound.fail.triggerAttackRelease("A2", "8n");
                             speak(client.feedbackQuote, 0.8, 0.9, client.voice, true);
                             score -= 10;
                             vfxParticles.push({
@@ -1569,12 +1608,14 @@ internalCtx.restore();
                                     points = 0;
                                     client.feedbackQuote = "It's just not Horizon enough.";
                                     client.feedbackType = 'lukewarm'; // This makes them walk away peacefully
+                                    if(sound.isStarted) sound.success5pt.triggerAttackRelease("C5", "16n");
                                     speak(client.feedbackQuote, 0.9, 1.0, client.voice, true);
                                 } else if (analyzeDesign(p.designData, client.specialRequest)) {
                                     points = 15;
                                     fulfilledSpecial = true;
                                     client.feedbackQuote = positiveQuotes[Math.floor(Math.random() * positiveQuotes.length)];
                                     client.feedbackType = 'positive';
+                                    if(sound.isStarted) sound.success15pt.triggerAttackRelease(["C4", "E4", "G4"], "16n");
                                     speak(client.feedbackQuote, 1.2, 1.4, client.voice, true);
                                 } else {
                                     handleNegativeOutcome();
@@ -1604,6 +1645,7 @@ internalCtx.restore();
                                         const quoteTemplate = colorStreakQuotes[Math.floor(Math.random() * colorStreakQuotes.length)];
                                         client.feedbackQuote = quoteTemplate.replace('{COLOR}', colorName);
                                         client.feedbackType = 'negative';
+                                        if(sound.isStarted) sound.fail.triggerAttackRelease("A2", "8n");
                                         speak(client.feedbackQuote, 0.8, 1.2, client.voice, true);
                                     }
                                 }
@@ -1612,6 +1654,7 @@ internalCtx.restore();
                                     if (points === 5) {
                                         client.feedbackQuote = minimalReactionQuotes[Math.floor(Math.random() * minimalReactionQuotes.length)];
                                         client.feedbackType = 'lukewarm';
+                                        if(sound.isStarted) sound.success5pt.triggerAttackRelease("C5", "16n");
                                         speak(client.feedbackQuote, 0.9, 1.0, client.voice, true);
                                     } else { // points are 10 or 15
                                         let availablePositiveQuotes = [...positiveQuotes];
@@ -1623,6 +1666,8 @@ internalCtx.restore();
                                             client.feedbackQuote = availablePositiveQuotes[Math.floor(Math.random() * availablePositiveQuotes.length)];
                                         }
                                         client.feedbackType = 'positive';
+                                        if(points === 10 && sound.isStarted) sound.success10pt.triggerAttackRelease("G5", "16n");
+                                        if(points === 15 && sound.isStarted) sound.success15pt.triggerAttackRelease(["C4", "E4", "G4"], "16n");
                                         speak(client.feedbackQuote, 1.2, 1.4, client.voice, true);
                                     }
                                 }
@@ -1904,7 +1949,7 @@ function drawFramesAndDetails() {
             highscoreInputContainer.style.display = 'none';
             restartButton.style.display = 'block';
             portfolioContainer.style.display = 'flex';
-            await showLeaderboard(leaderboardList);
+            await showLeaderboard(leaderboardList, null);
         }
 
         portfolioImagesContainer.innerHTML = '';
