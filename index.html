@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Designers vs. AI - A Ben Roberts Game</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.noEval.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         body {
@@ -644,1971 +644,1928 @@
     import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, onSnapshot, addDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    window.onload = () => {
-        // --- Canvas and Context Setup ---
-        const gameCanvas = document.getElementById('game-canvas');
-        const gameCtx = gameCanvas.getContext('2d');
-        const drawingCanvas = document.getElementById('drawing-paper');
-        const drawingCtx = drawingCanvas.getContext('2d', { willReadFrequently: true });
-        const startScreenCanvas = document.getElementById('start-screen-canvas');
-        const startScreenCtx = startScreenCanvas.getContext('2d');
-        
-        const internalCanvas = document.createElement('canvas');
-        const internalCtx = internalCanvas.getContext('2d');
-        const INTERNAL_WIDTH = 1280;
-        const INTERNAL_HEIGHT = 720;
-        internalCanvas.width = INTERNAL_WIDTH;
-        internalCanvas.height = INTERNAL_HEIGHT;
+    // --- Canvas and Context Setup ---
+    const gameCanvas = document.getElementById('game-canvas');
+    const gameCtx = gameCanvas.getContext('2d');
+    const drawingCanvas = document.getElementById('drawing-paper');
+    const drawingCtx = drawingCanvas.getContext('2d', { willReadFrequently: true });
+    const startScreenCanvas = document.getElementById('start-screen-canvas');
+    const startScreenCtx = startScreenCanvas.getContext('2d');
+    
+    const internalCanvas = document.createElement('canvas');
+    const internalCtx = internalCanvas.getContext('2d');
+    const INTERNAL_WIDTH = 1280;
+    const INTERNAL_HEIGHT = 720;
+    internalCanvas.width = INTERNAL_WIDTH;
+    internalCanvas.height = INTERNAL_HEIGHT;
 
-        // --- Asset Loading ---
-        const backgroundImage = new Image();
-        backgroundImage.src = 'https://raw.githubusercontent.com/BenDiva/designers-vs-ai/main/assets/background.jpg';
-        const startScreenImage = new Image();
-        startScreenImage.src = 'https://raw.githubusercontent.com/BenDiva/designers-vs-ai/main/assets/start-screen-bg.jpg';
+    // --- Asset Loading ---
+    const backgroundImage = new Image();
+    backgroundImage.src = 'https://raw.githubusercontent.com/BenDiva/designers-vs-ai/main/assets/background.jpg';
+    const startScreenImage = new Image();
+    startScreenImage.src = 'https://raw.githubusercontent.com/BenDiva/designers-vs-ai/main/assets/start-screen-bg.jpg';
 
 
-        const scoreEl = document.getElementById('score');
-        const topScoreEl = document.getElementById('top-score');
-        const messageBox = document.getElementById('message-box');
-        const messageTextEl = document.getElementById('message-text');
-        const restartButton = document.getElementById('restart-button');
-        const gameContainer = document.getElementById('game-container');
-        const portfolioContainer = document.getElementById('portfolio-container');
-        const portfolioImagesContainer = document.getElementById('portfolio-images');
-        const stack2El = document.getElementById('stack-2');
-        const stack3El = document.getElementById('stack-3');
-        const instructionMessageEl = document.getElementById('instruction-message');
-        const restockMessageEl = document.getElementById('restock-message');
-        const lukewarmMessageEl = document.getElementById('lukewarm-message');
-        const copiedMessageEl = document.getElementById('copied-message');
-        const highscoreInputContainer = document.getElementById('highscore-input-container');
-        const initialsInput = document.getElementById('initials-input');
-        const submitScoreButton = document.getElementById('submit-score-button');
-        const startScreen = document.getElementById('start-screen');
-        const startScreenLeaderboardEl = document.getElementById('start-screen-leaderboard');
-        const startScreenListEl = document.getElementById('start-screen-list');
-        const startPromptEl = document.getElementById('start-prompt');
-        const loadingContainer = document.getElementById('loading-container');
-        const muteButton = document.getElementById('mute-button');
-        const soundOnIcon = document.getElementById('sound-on-icon');
-        const soundOffIcon = document.getElementById('sound-off-icon');
-        const leaderboardContainer = document.getElementById('leaderboard-container');
-        const leaderboardList = document.getElementById('leaderboard-list');
-        const gameOverWrapper = document.getElementById('game-over-wrapper');
-        const uiScaler = document.getElementById('ui-scaler');
-        const drawHereMessageEl = document.getElementById('draw-here-message');
-        const pencilContainer = document.getElementById('pencil-container');
-        const pencilButtons = document.querySelectorAll('.pencil');
-        const windyMessageEl = document.getElementById('windy-message');
-        const specialRequestMessageEl = document.getElementById('special-request-message');
-        const trashIcon = document.getElementById('trash-icon');
-        const selectDrawingPrompt = document.getElementById('select-drawing-prompt');
+    const scoreEl = document.getElementById('score');
+    const topScoreEl = document.getElementById('top-score');
+    const messageBox = document.getElementById('message-box');
+    const messageTextEl = document.getElementById('message-text');
+    const restartButton = document.getElementById('restart-button');
+    const gameContainer = document.getElementById('game-container');
+    const portfolioContainer = document.getElementById('portfolio-container');
+    const portfolioImagesContainer = document.getElementById('portfolio-images');
+    const stack2El = document.getElementById('stack-2');
+    const stack3El = document.getElementById('stack-3');
+    const instructionMessageEl = document.getElementById('instruction-message');
+    const restockMessageEl = document.getElementById('restock-message');
+    const lukewarmMessageEl = document.getElementById('lukewarm-message');
+    const copiedMessageEl = document.getElementById('copied-message');
+    const highscoreInputContainer = document.getElementById('highscore-input-container');
+    const initialsInput = document.getElementById('initials-input');
+    const submitScoreButton = document.getElementById('submit-score-button');
+    const startScreen = document.getElementById('start-screen');
+    const startScreenLeaderboardEl = document.getElementById('start-screen-leaderboard');
+    const startScreenListEl = document.getElementById('start-screen-list');
+    const startPromptEl = document.getElementById('start-prompt');
+    const loadingContainer = document.getElementById('loading-container');
+    const muteButton = document.getElementById('mute-button');
+    const soundOnIcon = document.getElementById('sound-on-icon');
+    const soundOffIcon = document.getElementById('sound-off-icon');
+    const leaderboardContainer = document.getElementById('leaderboard-container');
+    const leaderboardList = document.getElementById('leaderboard-list');
+    const gameOverWrapper = document.getElementById('game-over-wrapper');
+    const uiScaler = document.getElementById('ui-scaler');
+    const drawHereMessageEl = document.getElementById('draw-here-message');
+    const pencilContainer = document.getElementById('pencil-container');
+    const pencilButtons = document.querySelectorAll('.pencil');
+    const windyMessageEl = document.getElementById('windy-message');
+    const specialRequestMessageEl = document.getElementById('special-request-message');
+    const trashIcon = document.getElementById('trash-icon');
+    const selectDrawingPrompt = document.getElementById('select-drawing-prompt');
 
-        // --- Firebase Setup ---
-        let db, auth, scoresCollectionRef;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'designers-vs-ai-default';
-        
-        // --- IMPORTANT ---
-        // Replace this with your own Firebase project configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyBglciCKGBvNki8z3Ln6RwRTw4JqGRpeiA",
-            authDomain: "designers-vs-ai-game.firebaseapp.com",
-            projectId: "designers-vs-ai-game",
-            storageBucket: "designers-vs-ai-game.appspot.com",
-            messagingSenderId: "503158591070",
-            appId: "1:503158591070:web:145b1e4eb8c63036726ecf"
-        };
+    // --- Firebase Setup ---
+    let db, auth, scoresCollectionRef;
+    const appId = 'designers-vs-ai-live';
+    
+    const firebaseConfig = {
+        apiKey: "AIzaSyBglciCKGBvNki8z3Ln6RwRTw4JqGRpeiA",
+        authDomain: "designers-vs-ai-game.firebaseapp.com",
+        projectId: "designers-vs-ai-game",
+        storageBucket: "designers-vs-ai-game.appspot.com",
+        messagingSenderId: "503158591070",
+        appId: "1:503158591070:web:145b1e4eb8c63036726ecf"
+    };
 
-        let scoresLoadedResolve;
-        const scoresLoadedPromise = new Promise(resolve => {
-            scoresLoadedResolve = resolve;
-        });
+    let scoresLoadedResolve;
+    const scoresLoadedPromise = new Promise(resolve => {
+        scoresLoadedResolve = resolve;
+    });
 
-        async function setupFirebase() {
-            let finalConfig = firebaseConfig;
-            let useAuthToken = false;
-            
-            // Use environment's config if available (for development)
-            if (typeof __firebase_config !== 'undefined') {
-                try {
-                    finalConfig = JSON.parse(__firebase_config);
-                    useAuthToken = true; // Only use auth token in the dev environment
-                } catch(e) {
-                    console.error("Could not parse environment Firebase config:", e);
+    async function setupFirebase() {
+        try {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            await signInAnonymously(auth);
+
+            scoresCollectionRef = collection(db, `scores`);
+
+            onSnapshot(scoresCollectionRef, (querySnapshot) => {
+                const scores = querySnapshot.docs.map(doc => doc.data());
+                scores.sort((a, b) => b.score - a.score);
+                const topTenScores = scores.slice(0, 10);
+
+                if (topTenScores.length > 0) {
+                    const topDoc = topTenScores[0];
+                    topScore = topDoc.score;
+                    topScoreName = topDoc.name;
+                } else {
+                    topScore = 0;
+                    topScoreName = 'AI';
                 }
-            }
+                
+                updatePodium(topTenScores.slice(0, 3));
+                
+                startScreenListEl.innerHTML = '';
+                
+                let scoreCount = 0;
+                if(topTenScores.length > 0) {
+                    topTenScores.forEach(data => {
+                        const li = document.createElement('li');
+                        li.textContent = `${data.name}: ${data.score}`;
+                        startScreenListEl.appendChild(li);
+                        scoreCount++;
+                    });
+                }
+                
+                for (let i = scoreCount; i < 10; i++) {
+                    const li = document.createElement('li');
+                    li.textContent = `DVA: 0`;
+                    startScreenListEl.appendChild(li);
+                }
 
-            if (!finalConfig || finalConfig.apiKey === "YOUR_API_KEY") {
-                console.log("Firebase config not found or is a placeholder. High scores will be local.");
-                startScreenListEl.innerHTML = '<li>Local Mode</li>';
-                updatePodium([]);
+
+                updateUI();
                 if (scoresLoadedResolve) {
                     scoresLoadedResolve();
-                    scoresLoadedResolve = null;
+                    scoresLoadedResolve = null; 
                 }
-                return;
-            }
-            try {
-                const app = initializeApp(finalConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                
-                if (useAuthToken && typeof __initial_auth_token !== 'undefined') {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
-                scoresCollectionRef = collection(db, `artifacts/${appId}/public/data/scores`);
-
-                onSnapshot(scoresCollectionRef, (querySnapshot) => {
-                    const scores = querySnapshot.docs.map(doc => doc.data());
-                    scores.sort((a, b) => b.score - a.score);
-                    const topTenScores = scores.slice(0, 10);
-
-                    if (topTenScores.length > 0) {
-                        const topDoc = topTenScores[0];
-                        topScore = topDoc.score;
-                        topScoreName = topDoc.name;
-                    } else {
-                        topScore = 0;
-                        topScoreName = 'AI';
-                    }
-                    
-                    updatePodium(topTenScores.slice(0, 3));
-                    
-                    startScreenListEl.innerHTML = '';
-                    
-                    let scoreCount = 0;
-                    if(topTenScores.length > 0) {
-                        topTenScores.forEach(data => {
-                            const li = document.createElement('li');
-                            li.textContent = `${data.name}: ${data.score}`;
-                            startScreenListEl.appendChild(li);
-                            scoreCount++;
-                        });
-                    }
-                    
-                    for (let i = scoreCount; i < 10; i++) {
-                        const li = document.createElement('li');
-                        li.textContent = `DVA: 0`;
-                        startScreenListEl.appendChild(li);
-                    }
-
-
-                    updateUI();
-                    if (scoresLoadedResolve) {
-                        scoresLoadedResolve();
-                        scoresLoadedResolve = null; 
-                    }
-                }, (error) => {
-                    console.error("Error with snapshot listener:", error);
-                    startScreenListEl.innerHTML = '<li>Error loading scores</li>';
-                    if (scoresLoadedResolve) {
-                        scoresLoadedResolve();
-                        scoresLoadedResolve = null;
-                    }
-                });
-
-            } catch (error) {
-                console.error("Error initializing Firebase:", error);
+            }, (error) => {
+                console.error("Error with snapshot listener:", error);
                 startScreenListEl.innerHTML = '<li>Error loading scores</li>';
                 if (scoresLoadedResolve) {
                     scoresLoadedResolve();
                     scoresLoadedResolve = null;
                 }
+            });
+
+        } catch (error) {
+            console.error("Error initializing Firebase:", error);
+            startScreenListEl.innerHTML = '<li>Error loading scores</li>';
+            if (scoresLoadedResolve) {
+                scoresLoadedResolve();
+                scoresLoadedResolve = null;
             }
         }
+    }
 
 
-        // --- Sound Engine ---
-        let reverb, sound, backgroundMusicPlayer, gameOverMusicPlayer;
-        let soundEnabled = typeof Tone !== 'undefined';
+    // --- Sound Engine ---
+    const reverb = new Tone.Freeverb(0.7, 3000).toDestination();
+    const sound = {
+        isStarted: false,
+        drop: new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.1 } }).toDestination(),
+        success15pt: new Tone.PolySynth(Tone.Synth, { oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.1 } }).toDestination(),
+        success10pt: new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.1 } }).toDestination(),
+        success5pt: new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.15, sustain: 0, release: 0.1 } }).toDestination(),
+        fail: new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.1 } }).toDestination(),
+        noDrop: new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.02, decay: 0.2, sustain: 0, release: 0.1 } }).toDestination(),
+        restock: new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.01, decay: 0.15, sustain: 0, release: 0.1 } }).toDestination(),
+        outOfPaper: new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination(),
+        footstep: new Tone.MembraneSynth({ pitchDecay: 0.01, octaves: 2, envelope: { attack: 0.001, decay: 0.1, sustain: 0 } }).toDestination(),
+        rain: new Tone.Noise({ type: 'pink', playbackRate: 0.2 }).toDestination(),
+        breach: new Tone.Synth({ oscillator: { type: 'sawtooth' }, envelope: { attack: 0.01, decay: 0.5, sustain: 0.2, release: 0.2 } }).toDestination(),
+        trash: new Tone.NoiseSynth({ noise: { type: 'brown' }, envelope: { attack: 0.01, decay: 0.1, sustain: 0 } }).toDestination(),
+        specialRequest: new Tone.PluckSynth().connect(reverb),
+    };
 
-        if (soundEnabled) {
-            reverb = new Tone.Freeverb(0.7, 3000).toDestination();
-            sound = {
-                isStarted: false,
-                drop: new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.1 } }).toDestination(),
-                success15pt: new Tone.PolySynth(Tone.Synth, { oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.1 } }).toDestination(),
-                success10pt: new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.1 } }).toDestination(),
-                success5pt: new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.15, sustain: 0, release: 0.1 } }).toDestination(),
-                fail: new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.1 } }).toDestination(),
-                noDrop: new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.02, decay: 0.2, sustain: 0, release: 0.1 } }).toDestination(),
-                restock: new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.01, decay: 0.15, sustain: 0, release: 0.1 } }).toDestination(),
-                outOfPaper: new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination(),
-                footstep: new Tone.MembraneSynth({ pitchDecay: 0.01, octaves: 2, envelope: { attack: 0.001, decay: 0.1, sustain: 0 } }).toDestination(),
-                rain: new Tone.Noise({ type: 'pink', playbackRate: 0.2 }).toDestination(),
-                breach: new Tone.Synth({ oscillator: { type: 'sawtooth' }, envelope: { attack: 0.01, decay: 0.5, sustain: 0.2, release: 0.2 } }).toDestination(),
-                trash: new Tone.NoiseSynth({ noise: { type: 'brown' }, envelope: { attack: 0.01, decay: 0.1, sustain: 0 } }).toDestination(),
-                specialRequest: new Tone.PluckSynth().connect(reverb),
-            };
+    const backgroundMusicPlayer = new Tone.Player({
+        url: "https://raw.githubusercontent.com/BenDiva/designers-vs-ai/main/assets/background-music.mp3",
+        loop: true,
+    }).toDestination();
+    backgroundMusicPlayer.volume.value = -6;
 
-            backgroundMusicPlayer = new Tone.Player({
-                url: "https://raw.githubusercontent.com/BenDiva/designers-vs-ai/main/assets/background-music.mp3",
-                loop: true,
-            }).toDestination();
-            backgroundMusicPlayer.volume.value = -6;
+    const gameOverMusicPlayer = new Tone.Player({
+        url: "https://raw.githubusercontent.com/BenDiva/designers-vs-ai/main/assets/game-over-music.mp3",
+    }).toDestination();
+    gameOverMusicPlayer.volume.value = 0;
 
-            gameOverMusicPlayer = new Tone.Player({
-                url: "https://raw.githubusercontent.com/BenDiva/designers-vs-ai/main/assets/game-over-music.mp3",
-            }).toDestination();
-            gameOverMusicPlayer.volume.value = 0;
 
-            sound.rain.volume.value = -25;
-            sound.breach.volume.value = -10;
-            sound.noDrop.volume.value = -15;
-            sound.specialRequest.volume.value = -10;
-        } else {
-            console.error("Tone.js failed to load, possibly due to a Content Security Policy. Sound will be disabled.");
-            // Create dummy objects so the game doesn't crash
-            sound = new Proxy({}, { get: () => () => {} });
-            backgroundMusicPlayer = { stop: () => {}, start: () => {}, volume: { value: 0 }, state: 'stopped' };
-            gameOverMusicPlayer = { stop: () => {}, start: () => {}, volume: { value: 0 } };
+    sound.rain.volume.value = -25;
+    sound.breach.volume.value = -10;
+    sound.noDrop.volume.value = -15;
+    sound.specialRequest.volume.value = -10;
+    let lastFootstepTime = 0;
+
+    // --- Game State and Configuration ---
+    let designer, projectiles, ai;
+    let clients = [], raindrops = [], windows = [], successfulDesigns = [], vfxParticles = [], paperVFX = [];
+    let startScreenRaindrops = [];
+    let score = 0, topScore = 0, topScoreName = 'AI';
+    let isGameOver = false;
+    let keys = {}, isDrawing = false;
+    let lastPoint, lastSpawnTime = 0, parallaxOffset = 0, gameTime = 0;
+    let paperCount = 3;
+    let hasShownFirstRestockMessage = false;
+    let hasShownSpecialRequestMessage = false;
+    let hasShownLukewarmMessage = false;
+    let totalClientsSpawned = 0;
+    let windStrength = 0;
+    let successfulDeliveries = 0;
+    let windStartTime = null;
+    let currentInkColorIndex = 0;
+    let usedColorsInCurrentDrawing = new Set();
+    let colorStreak = { 0: 0, 2: 0, 3: 0 };
+    let lastSpecialRequestType = null;
+    let rareQuoteUsed = false;
+    let isPopupActive = false;
+    let popupQueue = [];
+    let isGameLoaded = false;
+    let selectedPortfolioImage = null;
+    let scoreSubmitted = false;
+    let newlySubmittedScoreTimestamp = null;
+    let lastPointTime = 0;
+    let lastLineWidth = 3;
+
+
+    const inkColors = ['#00ffff', '#20c2a8', '#ff00ff', '#ffc300', '#ff7f50', '#0000ff', '#00ff00'];
+    const pencilColors = {
+        'pencil-cyan': 0,
+        'pencil-magenta': 2,
+        'pencil-yellow': 3
+    };
+    
+    // --- DIALOGUE DATA ---
+    const specialRequestTypes = [
+        { type: 'color', detail: '#00ffff', text: 'I want Cyan!' },
+        { type: 'color', detail: '#ff00ff', text: 'I want Magenta!' },
+        { type: 'color', detail: '#ffc300', text: 'I want Yellow!' },
+        { type: 'color_count', detail: 1, text: 'Just 1 colour please' },
+        { type: 'color_count', detail: 2, text: "I'd like any 2 colours" },
+        { type: 'color_count', detail: 3, text: 'I need all 3 colours!' },
+        { type: 'density', detail: 'dense', text: 'Make it detailed' },
+        { type: 'density', detail: 'minimal', text: 'Make it minimal' },
+        { type: 'color_combo', detail: [2, 0], text: 'Magenta and cyan please' },
+        { type: 'color_combo', detail: [0, 3], text: 'Cyan and yellow please' },
+        { type: 'color_combo', detail: [3, 2], text: 'Yellow and magenta please' },
+        { type: 'impossible', detail: 'horizon_green', text: "I want it Horizon Green" },
+        { type: 'zone', detail: 'left_empty', text: 'Keep the left side empty' },
+        { type: 'zone', detail: 'right_empty', text: 'Keep the right side empty' },
+        { type: 'zone', detail: 'top_empty', text: 'Keep the top half empty' },
+        { type: 'zone', detail: 'bottom_empty', text: 'Keep the bottom half empty' },
+    ];
+    
+    const clientQuotes = [
+        "Make it pop!", "I'll know it when I see it.", "Make the logo bigger.", "I need something viral.",
+        "I want something... edgy.", "Think outside the box.", "Give it some sizzle.", "It needs a strong narrative.",
+        "We need something disruptive.", "Let's leverage our assets.", "I need something with brand appeal.",
+        "We need a game-changer.", "It must be user-centric.", "Give it some vava-voom!",
+        "Can we try something in 3D?", "It needs to feel premium", "I want something that sings",
+        "Can we evoke innovation?", "I need timeless... but trending.", "I want Apple, but not Apple.",
+        "Give it some wow factor.", "It should work for all audiences.", "Stand out, but in a subtle way.",
+        "Yo! Synergise me some synergy!"
+    ];
+    
+    const colorStreakQuotes = [
+        "I'm seeing a lot of {COLOR} lately...",
+        "Man, {COLOR} again?",
+        "Yuck, {COLOR} is so last week",
+        "You really love {COLOR} eh?"
+    ];
+    
+    let availableQuotes = [];
+    
+    const investigationQuotes = ["Hmm...", "How does this work?", "Interesting...", "What's this?"];
+    
+    const positiveQuotes = [
+        "Perfect!", "Love it!", "That's the one!", "Genius!", "Nailed it!", "Approved!", "Thanks!",
+        "Just what I wanted!", "You're great!", "Take my money!"
+    ];
+
+    const minimalReactionQuotes = [
+        "It'll do, I suppose.", "Fine I guess", "You haven't really done much", 
+        "It's a bit basic", "Meh, okay", "I hope you don't charge me full price", 
+        "I'll pay you half", "Not your usual quality"
+    ];
+
+    const negativeQuotes = [
+        "Rubbish!", "Can you recommend another agency?", "What the hell is this?", "Am I missing something?",
+        "Nonsense.", "You suck!", "Don't worry about the brief then...", "Did you not get my email?", "Was I not clear?"
+    ];
+
+    const skinTones = ['#ffdbac', '#f1c27d', '#e0ac69', '#c68642', '#8d5524'];
+    const clothingTones = ['#8B4513', '#654321', '#5a3d2b', '#3d2b1f', '#2b1d0e'];
+
+    const DESIGNER_WIDTH = 50, DESIGNER_HEIGHT = 60;
+    const CLIENT_WIDTH = 44, CLIENT_HEIGHT = 77;
+    const AI_WIDTH = 80, AI_HEIGHT = 155;
+    const PROJECTILE_SPEED = 7, BUILDING_HEIGHT = 150;
+    const MS_PER_FRAME = 16.67;
+    const windowHeight = 80;
+    const topMargin = 50; 
+    
+    // --- Text-to-Speech ---
+    const synth = window.speechSynthesis;
+    let maleVoices = [];
+    let femaleVoices = [];
+    let speechQueue = [];
+    let clientVoiceCounter = 0;
+
+    function loadVoices() {
+        const allVoices = synth.getVoices();
+        maleVoices = allVoices.filter(voice => voice.name.includes('Male') || voice.gender === 'male');
+        femaleVoices = allVoices.filter(voice => voice.name.includes('Female') || voice.gender === 'female');
+        if (maleVoices.length === 0) maleVoices = allVoices.filter(voice => voice.lang.startsWith('en-'));
+        if (femaleVoices.length === 0) femaleVoices = allVoices.reverse().filter(voice => voice.lang.startsWith('en-'));
+    }
+
+    if (synth.onvoiceschanged !== undefined) {
+        synth.onvoiceschanged = loadVoices;
+    }
+    loadVoices();
+
+    function processSpeechQueue() {
+        if (isGameOver || synth.speaking || speechQueue.length === 0 || Tone.Master.mute) {
+            return;
         }
-        
-        let lastFootstepTime = 0;
-
-        // --- Game State and Configuration ---
-        let designer, projectiles, ai;
-        let clients = [], raindrops = [], windows = [], successfulDesigns = [], vfxParticles = [], paperVFX = [];
-        let startScreenRaindrops = [];
-        let score = 0, topScore = 0, topScoreName = 'AI';
-        let isGameOver = false;
-        let keys = {}, isDrawing = false;
-        let lastPoint, lastSpawnTime = 0, parallaxOffset = 0, gameTime = 0;
-        let paperCount = 3;
-        let hasShownFirstRestockMessage = false;
-        let hasShownSpecialRequestMessage = false;
-        let hasShownLukewarmMessage = false;
-        let totalClientsSpawned = 0;
-        let windStrength = 0;
-        let successfulDeliveries = 0;
-        let windStartTime = null;
-        let currentInkColorIndex = 0;
-        let usedColorsInCurrentDrawing = new Set();
-        let colorStreak = { 0: 0, 2: 0, 3: 0 };
-        let lastSpecialRequestType = null;
-        let rareQuoteUsed = false;
-        let isPopupActive = false;
-        let popupQueue = [];
-        let isGameLoaded = false;
-        let selectedPortfolioImage = null;
-        let scoreSubmitted = false;
-        let newlySubmittedScoreTimestamp = null;
-        let lastPointTime = 0;
-        let lastLineWidth = 3;
-
-
-        const inkColors = ['#00ffff', '#20c2a8', '#ff00ff', '#ffc300', '#ff7f50', '#0000ff', '#00ff00'];
-        const pencilColors = {
-            'pencil-cyan': 0,
-            'pencil-magenta': 2,
-            'pencil-yellow': 3
+        const utterance = speechQueue.shift();
+        utterance.onend = () => {
+            setTimeout(processSpeechQueue, 100);
         };
-        
-        // --- DIALOGUE DATA ---
-        const specialRequestTypes = [
-            { type: 'color', detail: '#00ffff', text: 'I want Cyan!' },
-            { type: 'color', detail: '#ff00ff', text: 'I want Magenta!' },
-            { type: 'color', detail: '#ffc300', text: 'I want Yellow!' },
-            { type: 'color_count', detail: 1, text: 'Just 1 colour please' },
-            { type: 'color_count', detail: 2, text: "I'd like any 2 colours" },
-            { type: 'color_count', detail: 3, text: 'I need all 3 colours!' },
-            { type: 'density', detail: 'dense', text: 'Make it detailed' },
-            { type: 'density', detail: 'minimal', text: 'Make it minimal' },
-            { type: 'color_combo', detail: [2, 0], text: 'Magenta and cyan please' },
-            { type: 'color_combo', detail: [0, 3], text: 'Cyan and yellow please' },
-            { type: 'color_combo', detail: [3, 2], text: 'Yellow and magenta please' },
-            { type: 'impossible', detail: 'horizon_green', text: "I want it Horizon Green" },
-            { type: 'zone', detail: 'left_empty', text: 'Keep the left side empty' },
-            { type: 'zone', detail: 'right_empty', text: 'Keep the right side empty' },
-            { type: 'zone', detail: 'top_empty', text: 'Keep the top half empty' },
-            { type: 'zone', detail: 'bottom_empty', text: 'Keep the bottom half empty' },
-        ];
-        
-        const clientQuotes = [
-            "Make it pop!", "I'll know it when I see it.", "Make the logo bigger.", "I need something viral.",
-            "I want something... edgy.", "Think outside the box.", "Give it some sizzle.", "It needs a strong narrative.",
-            "We need something disruptive.", "Let's leverage our assets.", "I need something with brand appeal.",
-            "We need a game-changer.", "It must be user-centric.", "Give it some vava-voom!",
-            "Can we try something in 3D?", "It needs to feel premium", "I want something that sings",
-            "Can we evoke innovation?", "I need timeless... but trending.", "I want Apple, but not Apple.",
-            "Give it some wow factor.", "It should work for all audiences.", "Stand out, but in a subtle way.",
-            "Yo! Synergise me some synergy!"
-        ];
-        
-        const colorStreakQuotes = [
-            "I'm seeing a lot of {COLOR} lately...",
-            "Man, {COLOR} again?",
-            "Yuck, {COLOR} is so last week",
-            "You really love {COLOR} eh?"
-        ];
-        
-        let availableQuotes = [];
-        
-        const investigationQuotes = ["Hmm...", "How does this work?", "Interesting...", "What's this?"];
-        
-        const positiveQuotes = [
-            "Perfect!", "Love it!", "That's the one!", "Genius!", "Nailed it!", "Approved!", "Thanks!",
-            "Just what I wanted!", "You're great!", "Take my money!"
-        ];
+        synth.speak(utterance);
+    }
 
-        const minimalReactionQuotes = [
-            "It'll do, I suppose.", "Fine I guess", "You haven't really done much", 
-            "It's a bit basic", "Meh, okay", "I hope you don't charge me full price", 
-            "I'll pay you half", "Not your usual quality"
-        ];
+    function speak(text, pitch = 1, rate = 1, voice = null, immediate = false) {
+        if (isGameOver || Tone.Master.mute) return;
 
-        const negativeQuotes = [
-            "Rubbish!", "Can you recommend another agency?", "What the hell is this?", "Am I missing something?",
-            "Nonsense.", "You suck!", "Don't worry about the brief then...", "Did you not get my email?", "Was I not clear?"
-        ];
-
-        const skinTones = ['#ffdbac', '#f1c27d', '#e0ac69', '#c68642', '#8d5524'];
-        const clothingTones = ['#8B4513', '#654321', '#5a3d2b', '#3d2b1f', '#2b1d0e'];
-
-        const DESIGNER_WIDTH = 50, DESIGNER_HEIGHT = 60;
-        const CLIENT_WIDTH = 44, CLIENT_HEIGHT = 77;
-        const AI_WIDTH = 80, AI_HEIGHT = 155;
-        const PROJECTILE_SPEED = 7, BUILDING_HEIGHT = 150;
-        const MS_PER_FRAME = 16.67;
-        const windowHeight = 80;
-        const topMargin = 50; 
-        
-        // --- Text-to-Speech ---
-        const synth = window.speechSynthesis;
-        let maleVoices = [];
-        let femaleVoices = [];
-        let speechQueue = [];
-        let clientVoiceCounter = 0;
-
-        function loadVoices() {
-            const allVoices = synth.getVoices();
-            maleVoices = allVoices.filter(voice => voice.name.includes('Male') || voice.gender === 'male');
-            femaleVoices = allVoices.filter(voice => voice.name.includes('Female') || voice.gender === 'female');
-            if (maleVoices.length === 0) maleVoices = allVoices.filter(voice => voice.lang.startsWith('en-'));
-            if (femaleVoices.length === 0) femaleVoices = allVoices.reverse().filter(voice => voice.lang.startsWith('en-'));
+        const utterThis = new SpeechSynthesisUtterance(text);
+        utterThis.pitch = pitch;
+        utterThis.rate = rate;
+        if (voice) {
+            utterThis.voice = voice;
         }
 
-        if (synth.onvoiceschanged !== undefined) {
-            synth.onvoiceschanged = loadVoices;
-        }
-        loadVoices();
-
-        function processSpeechQueue() {
-            if (isGameOver || synth.speaking || speechQueue.length === 0 || (soundEnabled && Tone.Master.mute)) {
-                return;
-            }
-            const utterance = speechQueue.shift();
-            utterance.onend = () => {
-                setTimeout(processSpeechQueue, 100);
-            };
-            synth.speak(utterance);
-        }
-
-        function speak(text, pitch = 1, rate = 1, voice = null, immediate = false) {
-            if (isGameOver || (soundEnabled && Tone.Master.mute)) return;
-
-            const utterThis = new SpeechSynthesisUtterance(text);
-            utterThis.pitch = pitch;
-            utterThis.rate = rate;
-            if (voice) {
-                utterThis.voice = voice;
-            }
-
-            if (immediate) {
-                synth.cancel();
-                speechQueue = [utterThis];
+        if (immediate) {
+            synth.cancel();
+            speechQueue = [utterThis];
+            processSpeechQueue();
+        } else {
+            speechQueue.push(utterThis);
+            if (!synth.speaking) {
                 processSpeechQueue();
-            } else {
-                speechQueue.push(utterThis);
-                if (!synth.speaking) {
-                    processSpeechQueue();
-                }
             }
         }
+    }
 
-        // --- Game Object Classes ---
+    // --- Game Object Classes ---
 
-        class Designer {
-            constructor(x, y) {
-                this.x = x; this.y = y; this.width = DESIGNER_WIDTH; this.height = DESIGNER_HEIGHT; this.speed = 7;
-                this.idleBob = 0;
-            }
-            update(time) {
-                const oldX = this.x;
-                if (keys['a'] || keys['A'] || keys['d'] || keys['D']) {
-                    if (keys['a'] || keys['A']) this.x -= this.speed;
-                    if (keys['d'] || keys['D']) this.x += this.speed;
-                    if (time - lastFootstepTime > 150) {
-                        if(soundEnabled && sound.isStarted) sound.footstep.triggerAttackRelease("C2", "32n");
-                        lastFootstepTime = time;
-                    }
-                }
-                this.x = Math.max(0, Math.min(INTERNAL_WIDTH - this.width, this.x));
-                parallaxOffset += (this.x - oldX) * 0.1;
-                this.idleBob = Math.sin(time / 200) * 2;
-
-                if (this.x < 50 && paperCount < 3) {
-                    paperCount = 3;
-                    updatePaperStackUI();
-                    restockMessageEl.style.display = 'none';
-                    if(soundEnabled) sound.restock.triggerAttackRelease("8n");
-                    for (let i = 0; i < 5; i++) {
-                        paperVFX.push({
-                            x: 60, y: 100,
-                            vx: Math.random() * 2 + 1, vy: (Math.random() - 0.5) * 2,
-                            width: 15, height: 20, rotation: 0, life: 60
-                        });
-                    }
-                }
-            }
-            draw(isSilhouette = false) {
-                const designerX = this.x; 
-                const designerY = this.y + this.idleBob;
-                
-                const bodyColor = isSilhouette ? '#1a142d' : '#333';
-                const scarfColor = isSilhouette ? '#1a142d' : '#00ffff';
-                const skinColor = isSilhouette ? '#1a142d' : '#ffdbac';
-                const hairColor = isSilhouette ? '#1a142d' : '#654321';
-                const glassesColor = isSilhouette ? '#1a142d' : '#000';
-
-                internalCtx.fillStyle = bodyColor;
-                internalCtx.beginPath();
-                internalCtx.moveTo(designerX + 5, designerY + this.height);
-                internalCtx.lineTo(designerX + 15, designerY + 20);
-                internalCtx.lineTo(designerX + this.width - 15, designerY + 20);
-                internalCtx.lineTo(designerX + this.width - 5, designerY + this.height);
-                internalCtx.closePath();
-                internalCtx.fill();
-                internalCtx.fillStyle = scarfColor;
-                internalCtx.fillRect(designerX + 10, designerY + 20, this.width - 20, 10);
-                internalCtx.fillStyle = skinColor;
-                internalCtx.fillRect(designerX + 15, designerY, 20, 25);
-                internalCtx.fillStyle = glassesColor;
-                internalCtx.fillRect(designerX + 16, designerY + 8, 8, 8);
-                internalCtx.fillRect(designerX + 26, designerY + 8, 8, 8);
-                internalCtx.fillStyle = hairColor;
-                internalCtx.fillRect(designerX + 15, designerY + 20, 20, 8);
-                internalCtx.beginPath();
-                internalCtx.arc(designerX + 25, designerY, 14, Math.PI, 2 * Math.PI);
-                internalCtx.fill();
-            }
+    class Designer {
+        constructor(x, y) {
+            this.x = x; this.y = y; this.width = DESIGNER_WIDTH; this.height = DESIGNER_HEIGHT; this.speed = 7;
+            this.idleBob = 0;
         }
-
-        class Client {
-            constructor(y, speed) {
-                this.width = CLIENT_WIDTH; this.height = CLIENT_HEIGHT;
-                this.x = -this.width; this.y = y; this.speed = speed;
-                this.isCaught = false; this.isAngry = false;
-                this.isInvestigating = false;
-                this.isSwarming = false;
-                this.hasReachedAI = false;
-                this.caughtDesignImage = null; this.walkBob = 0;
-                this.feedbackQuote = '';
-                this.feedbackType = null;
-                this.specialRequest = null;
-                this.voicePitch = 1.0;
-                this.voiceRate = 1.2;
-                this.skinColor = skinTones[Math.floor(Math.random() * skinTones.length)];
-                this.clothingColor = clothingTones[Math.floor(Math.random() * clothingTones.length)];
-
-                if (clientVoiceCounter % 2 === 0 && femaleVoices.length > 0) {
-                    this.voice = femaleVoices[Math.floor(Math.random() * femaleVoices.length)];
-                } else if (maleVoices.length > 0) {
-                    this.voice = maleVoices[Math.floor(Math.random() * maleVoices.length)];
-                } else {
-                    this.voice = null;
-                }
-                clientVoiceCounter++;
-                
-                this.investigationQuoteVisible = false;
-                this.quoteTimer = 0;
-                this.nextQuoteTime = 0;
-                this.targetX = this.x;
-                this.moveTimer = 0;
-
-                if (totalClientsSpawned === 3 || (totalClientsSpawned > 3 && totalClientsSpawned % 3 === 0)) {
-                    let availableRequests = specialRequestTypes;
-                    if (totalClientsSpawned < 10) {
-                        availableRequests = specialRequestTypes.filter(req => req.type !== 'impossible');
-                    }
-                    let newRequest;
-                    do {
-                        newRequest = availableRequests[Math.floor(Math.random() * availableRequests.length)];
-                    } while (newRequest.type === lastSpecialRequestType);
-                    this.specialRequest = newRequest;
-                    lastSpecialRequestType = this.specialRequest.type;
-                    this.quote = this.specialRequest.text;
-                } else {
-                    if (availableQuotes.length === 0) availableQuotes = [...clientQuotes];
-                    const quoteIndex = Math.floor(Math.random() * availableQuotes.length);
-                    this.quote = availableQuotes.splice(quoteIndex, 1)[0];
-                }
-                this.quoteVisible = true;
-                if (this.specialRequest && soundEnabled) {
-                    sound.specialRequest.triggerAttackRelease("C6", "8n");
-                }
-                speak(this.quote, this.voicePitch, this.voiceRate, this.voice);
-            }
-            
-            update(time) {
-                if (this.isInvestigating) {
-                    this.quoteTimer -= MS_PER_FRAME;
-                    if (this.quoteTimer <= 0 && this.investigationQuoteVisible) {
-                        this.investigationQuoteVisible = false;
-                        this.nextQuoteTime = (5000 + Math.random() * 5000);
-                    }
-
-                    this.nextQuoteTime -= MS_PER_FRAME;
-                    if (this.nextQuoteTime <= 0 && !this.investigationQuoteVisible) {
-                        this.investigationQuoteVisible = true;
-                        this.quote = investigationQuotes[Math.floor(Math.random() * investigationQuotes.length)];
-                        this.quoteTimer = 3000;
-                    }
-
-                    this.moveTimer -= MS_PER_FRAME;
-                    if (this.moveTimer <= 0) {
-                        const wanderZoneStart = ai.x - this.width / 2;
-                        const wanderZoneWidth = ai.width;
-                        this.targetX = wanderZoneStart + Math.random() * wanderZoneWidth;
-                        this.moveTimer = 1000 + Math.random() * 2000;
-                    }
-                    
-                    const dx = this.targetX - this.x;
-                    if (Math.abs(dx) > 1) {
-                        this.x += Math.sign(dx) * 0.5;
-                    }
-                    
-                    this.walkBob = Math.sin(time / 250) * 1.5;
-                    return;
-                }
-
-                if (this.isSwarming) {
-                    if (this.x + this.width >= ai.x) {
-                        this.isInvestigating = true;
-                        this.isSwarming = false;
-                        this.quoteTimer = 3000 * Math.random();
-                        this.investigationQuoteVisible = true;
-                        this.quote = investigationQuotes[Math.floor(Math.random() * investigationQuotes.length)];
-                    } else {
-                        this.x += this.speed * 3;
-                        this.walkBob = Math.sin(time / 100) * 3;
-                    }
-                    return;
-                }
-
-                if (this.isCaught) { this.x -= this.speed * 2; } 
-                else if (this.isAngry) { this.x += this.speed * 2.5; } 
-                else { this.x += this.speed; }
-
-                this.walkBob = Math.sin(time / 150) * 2;
-                if (this.x > INTERNAL_WIDTH / 3) this.quoteVisible = false;
-            }
-
-            draw() {
-                const clientX = this.x; const clientY = this.y + this.walkBob;
-                
-                internalCtx.save();
-                internalCtx.fillStyle = 'rgba(0, 4, 28, 0.4)';
-                internalCtx.shadowColor = '#00041c';
-                internalCtx.shadowBlur = 15;
-                internalCtx.beginPath();
-                const shadowBaseY = clientY + this.height;
-                const shadowTipY = INTERNAL_HEIGHT + 50;
-                const shadowBaseWidth = this.width * 0.9;
-                const shadowTipWidth = this.width * 1.8;
-
-                internalCtx.moveTo(clientX + (this.width - shadowBaseWidth) / 2, shadowBaseY);
-                internalCtx.lineTo(clientX + (this.width - shadowTipWidth) / 2, shadowTipY);
-                internalCtx.lineTo(clientX + (this.width + shadowTipWidth) / 2, shadowTipY);
-                internalCtx.lineTo(clientX + (this.width + shadowBaseWidth) / 2, shadowBaseY);
-                internalCtx.closePath();
-                internalCtx.fill();
-                internalCtx.restore();
-
-                internalCtx.fillStyle = this.clothingColor;
-                internalCtx.beginPath();
-                internalCtx.moveTo(clientX, clientY + this.height);
-                internalCtx.lineTo(clientX + 5, clientY + 15);
-                internalCtx.lineTo(clientX + this.width - 5, clientY + 15);
-                internalCtx.lineTo(clientX + this.width, clientY + this.height);
-                internalCtx.closePath();
-                internalCtx.fill();
-                internalCtx.fillStyle = this.skinColor;
-                internalCtx.fillRect(clientX + 10, clientY, this.width - 20, 20);
-                
-                if (this.specialRequest) {
-                    internalCtx.fillStyle = '#ffff00';
-                    internalCtx.beginPath();
-                    internalCtx.moveTo(clientX + 8, clientY - 2);
-                    internalCtx.lineTo(clientX + 8, clientY - 12);
-                    internalCtx.lineTo(clientX + 16, clientY - 8);
-                    internalCtx.lineTo(clientX + 22, clientY - 16);
-                    internalCtx.lineTo(clientX + 28, clientY - 8);
-                    internalCtx.lineTo(clientX + 36, clientY - 12);
-                    internalCtx.lineTo(clientX + 36, clientY - 2);
-                    internalCtx.closePath();
-                    internalCtx.fill();
-                } else {
-                    internalCtx.fillStyle = '#5a3d2b';
-                    internalCtx.fillRect(clientX + 5, clientY - 2, this.width - 10, 5);
-                    internalCtx.fillRect(clientX + 8, clientY - 8, this.width - 16, 8);
-                }
-
-                const NEON_SIGN_X = INTERNAL_WIDTH * 0.55;
-                const NEON_SIGN_WIDTH = 300;
-                const clientCenterX = clientX + this.width / 2;
-                const signCenterX = NEON_SIGN_X + NEON_SIGN_WIDTH / 2;
-                const distanceToSign = Math.abs(clientCenterX - signCenterX);
-                const lightFalloff = NEON_SIGN_WIDTH * 0.8;
-                const lightIntensity = Math.max(0, 1 - (distanceToSign / lightFalloff));
-
-                internalCtx.globalCompositeOperation = 'source-atop';
-                const redTint = 10 * lightIntensity;
-                const blueTint = 20 * (1 - lightIntensity);
-                const brightness = 0.6 + (0.4 * lightIntensity);
-                internalCtx.fillStyle = `rgba(${redTint}, 0, ${blueTint}, ${1 - brightness})`;
-                
-                internalCtx.beginPath();
-                internalCtx.moveTo(clientX, clientY + this.height);
-                internalCtx.lineTo(clientX + 5, clientY + 15);
-                internalCtx.lineTo(clientX + this.width - 5, clientY + 15);
-                internalCtx.lineTo(clientX + this.width, clientY + this.height);
-                internalCtx.closePath();
-                internalCtx.fill();
-                internalCtx.fillRect(clientX + 10, clientY, this.width - 20, 20);
-                
-                if (this.specialRequest) {
-                    internalCtx.beginPath();
-                    internalCtx.moveTo(clientX + 8, clientY - 2);
-                    internalCtx.lineTo(clientX + 8, clientY - 12);
-                    internalCtx.lineTo(clientX + 16, clientY - 8);
-                    internalCtx.lineTo(clientX + 22, clientY - 16);
-                    internalCtx.lineTo(clientX + 28, clientY - 8);
-                    internalCtx.lineTo(clientX + 36, clientY - 12);
-                    internalCtx.lineTo(clientX + 36, clientY - 2);
-                    internalCtx.closePath();
-                    internalCtx.fill();
-                } else {
-                    internalCtx.fillRect(clientX + 5, clientY - 2, this.width - 10, 5);
-                    internalCtx.fillRect(clientX + 8, clientY - 8, this.width - 16, 8);
-                }
-
-                internalCtx.globalCompositeOperation = 'source-over';
-                
-                const textYPosition = this.y - 15;
-                const textMaxWidth = 140;
-
-                if (this.isCaught) {
-                    let textColor = '#00ff00';
-                    if (this.feedbackType === 'negative') textColor = '#ff4141';
-                    else if (this.feedbackType === 'lukewarm') textColor = '#ffffff';
-                    internalCtx.fillStyle = textColor;
-                    internalCtx.font = '12px "Press Start 2P"';
-                    internalCtx.textAlign = 'center';
-                    wrapText(internalCtx, this.feedbackQuote, this.x + this.width / 2, textYPosition, textMaxWidth, 15);
-                } else if (this.isAngry && !this.isInvestigating) {
-                    internalCtx.fillStyle = '#ff4141';
-                    internalCtx.font = '12px "Press Start 2P"';
-                    internalCtx.textAlign = 'center';
-                    wrapText(internalCtx, this.feedbackQuote, this.x + this.width / 2, textYPosition, textMaxWidth, 15);
-                } else if (this.isInvestigating && this.investigationQuoteVisible) {
-                     internalCtx.fillStyle = '#fff';
-                    internalCtx.font = '12px "Press Start 2P"';
-                    internalCtx.textAlign = 'center';
-                    wrapText(internalCtx, this.quote, this.x + this.width / 2, textYPosition, textMaxWidth, 15);
-                } else if (this.quoteVisible && !this.isInvestigating && !this.isSwarming) {
-                    internalCtx.fillStyle = this.specialRequest ? '#ffff00' : '#fff';
-                    internalCtx.font = '12px "Press Start 2P"';
-                    internalCtx.textAlign = 'center';
-                    wrapText(internalCtx, this.quote, this.x + this.width / 2, textYPosition, textMaxWidth, 15);
-                }
-                
-                if (this.isCaught && this.caughtDesignImage) {
-                    const paperX = this.x - 15;
-                    const paperY = this.y + 15;
-                    internalCtx.drawImage(this.caughtDesignImage, paperX, paperY, 40, 40);
-
-                    const paperCenterX = paperX + 20;
-                    const paperDistanceToSign = Math.abs(paperCenterX - signCenterX);
-                    const paperLightIntensity = Math.max(0, 1 - (paperDistanceToSign / lightFalloff));
-                    internalCtx.globalCompositeOperation = 'source-atop';
-                    const pRedTint = 10 * paperLightIntensity;
-                    const pBlueTint = 20 * (1 - paperLightIntensity);
-                    const pBrightness = 0.75 + (0.4 * paperLightIntensity);
-                    internalCtx.fillStyle = `rgba(${pRedTint}, 0, ${pBlueTint}, ${1 - pBrightness})`;
-                    internalCtx.fillRect(paperX, paperY, 40, 40);
-                    internalCtx.globalCompositeOperation = 'source-over';
+        update(time) {
+            const oldX = this.x;
+            if (keys['a'] || keys['A'] || keys['d'] || keys['D']) {
+                if (keys['a'] || keys['A']) this.x -= this.speed;
+                if (keys['d'] || keys['D']) this.x += this.speed;
+                if (time - lastFootstepTime > 150) {
+                    if(sound.isStarted) sound.footstep.triggerAttackRelease("C2", "32n");
+                    lastFootstepTime = time;
                 }
             }
-        }
+            this.x = Math.max(0, Math.min(INTERNAL_WIDTH - this.width, this.x));
+            parallaxOffset += (this.x - oldX) * 0.1;
+            this.idleBob = Math.sin(time / 200) * 2;
 
-        class Projectile {
-            constructor(x, y, image, isBlank = false, designData = null) {
-                this.x = x; this.y = y; this.width = 50; this.height = 50;
-                this.speed = PROJECTILE_SPEED; this.image = image; this.isBlank = isBlank;
-                this.rotation = 0;
-                this.designData = designData;
-            }
-            update() { 
-                this.y += this.speed;
-                this.x += windStrength * 2;
-                this.rotation = Math.atan2(windStrength * 2, this.speed);
-            }
-            draw() { 
-                internalCtx.save();
-                internalCtx.translate(this.x + this.width / 2, this.y + this.height / 2);
-                internalCtx.rotate(this.rotation);
-                internalCtx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
-
-                const NEON_SIGN_X = INTERNAL_WIDTH * 0.55;
-                const NEON_SIGN_WIDTH = 300;
-                const projectileCenterX = this.x + this.width / 2;
-                const signCenterX = NEON_SIGN_X + NEON_SIGN_WIDTH / 2;
-                const distanceToSign = Math.abs(projectileCenterX - signCenterX);
-                const lightFalloff = NEON_SIGN_WIDTH * 0.8;
-                const lightIntensity = Math.max(0, 1 - (distanceToSign / lightFalloff));
-
-                internalCtx.globalCompositeOperation = 'source-atop';
-                const redTint = 10 * lightIntensity;
-                const blueTint = 20 * (1 - lightIntensity);
-                const brightness = 0.75 + (0.4 * lightIntensity);
-                internalCtx.fillStyle = `rgba(${redTint}, 0, ${blueTint}, ${1 - brightness})`;
-                internalCtx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height);
-                internalCtx.globalCompositeOperation = 'source-over';
-
-                internalCtx.restore();
-            }
-        }
-
-        class AI {
-            constructor(x, y) {
-                this.x = x; this.y = y; this.width = AI_WIDTH; this.height = AI_HEIGHT;
-                this.blinkingLights = [];
-                this.breaches = 0;
-                this.setupLights();
-            }
-            setupLights() {
-                const lightColors = ['#00ff00', '#ffff00', '#ff0000', '#00ffff'];
-                for (let i = 0; i < 10; i++) {
-                    this.blinkingLights.push({
-                        x: this.x + 10 + Math.random() * (this.width - 20),
-                        y: this.y + 10 + Math.random() * (this.height - 20),
-                        radius: Math.random() * 2 + 1,
-                        color: lightColors[Math.floor(Math.random() * lightColors.length)],
-                        isOn: Math.random() > 0.5,
-                        blinkRate: Math.floor(Math.random() * 100) + 20,
-                        blinkCounter: 0,
+            if (this.x < 50 && paperCount < 3) {
+                paperCount = 3;
+                updatePaperStackUI();
+                restockMessageEl.style.display = 'none';
+                if(sound.isStarted) sound.restock.triggerAttackRelease("8n");
+                for (let i = 0; i < 5; i++) {
+                    paperVFX.push({
+                        x: 60, y: 100,
+                        vx: Math.random() * 2 + 1, vy: (Math.random() - 0.5) * 2,
+                        width: 15, height: 20, rotation: 0, life: 60
                     });
                 }
             }
-            update() {
-                this.blinkingLights.forEach(light => {
-                    light.blinkCounter++;
-                    if (light.blinkCounter > light.blinkRate) {
-                        light.isOn = !light.isOn;
-                        light.blinkCounter = 0;
-                    }
+        }
+        draw(isSilhouette = false) {
+            const designerX = this.x; 
+            const designerY = this.y + this.idleBob;
+            
+            const bodyColor = isSilhouette ? '#1a142d' : '#333';
+            const scarfColor = isSilhouette ? '#1a142d' : '#00ffff';
+            const skinColor = isSilhouette ? '#1a142d' : '#ffdbac';
+            const hairColor = isSilhouette ? '#1a142d' : '#654321';
+            const glassesColor = isSilhouette ? '#1a142d' : '#000';
+
+            internalCtx.fillStyle = bodyColor;
+            internalCtx.beginPath();
+            internalCtx.moveTo(designerX + 5, designerY + this.height);
+            internalCtx.lineTo(designerX + 15, designerY + 20);
+            internalCtx.lineTo(designerX + this.width - 15, designerY + 20);
+            internalCtx.lineTo(designerX + this.width - 5, designerY + this.height);
+            internalCtx.closePath();
+            internalCtx.fill();
+            internalCtx.fillStyle = scarfColor;
+            internalCtx.fillRect(designerX + 10, designerY + 20, this.width - 20, 10);
+            internalCtx.fillStyle = skinColor;
+            internalCtx.fillRect(designerX + 15, designerY, 20, 25);
+            internalCtx.fillStyle = glassesColor;
+            internalCtx.fillRect(designerX + 16, designerY + 8, 8, 8);
+            internalCtx.fillRect(designerX + 26, designerY + 8, 8, 8);
+            internalCtx.fillStyle = hairColor;
+            internalCtx.fillRect(designerX + 15, designerY + 20, 20, 8);
+            internalCtx.beginPath();
+            internalCtx.arc(designerX + 25, designerY, 14, Math.PI, 2 * Math.PI);
+            internalCtx.fill();
+        }
+    }
+
+    class Client {
+        constructor(y, speed) {
+            this.width = CLIENT_WIDTH; this.height = CLIENT_HEIGHT;
+            this.x = -this.width; this.y = y; this.speed = speed;
+            this.isCaught = false; this.isAngry = false;
+            this.isInvestigating = false;
+            this.isSwarming = false;
+            this.hasReachedAI = false;
+            this.caughtDesignImage = null; this.walkBob = 0;
+            this.feedbackQuote = '';
+            this.feedbackType = null;
+            this.specialRequest = null;
+            this.voicePitch = 1.0;
+            this.voiceRate = 1.2;
+            this.skinColor = skinTones[Math.floor(Math.random() * skinTones.length)];
+            this.clothingColor = clothingTones[Math.floor(Math.random() * clothingTones.length)];
+
+            if (clientVoiceCounter % 2 === 0 && femaleVoices.length > 0) {
+                this.voice = femaleVoices[Math.floor(Math.random() * femaleVoices.length)];
+            } else if (maleVoices.length > 0) {
+                this.voice = maleVoices[Math.floor(Math.random() * maleVoices.length)];
+            } else {
+                this.voice = null;
+            }
+            clientVoiceCounter++;
+            
+            this.investigationQuoteVisible = false;
+            this.quoteTimer = 0;
+            this.nextQuoteTime = 0;
+            this.targetX = this.x;
+            this.moveTimer = 0;
+
+            if (totalClientsSpawned === 3 || (totalClientsSpawned > 3 && totalClientsSpawned % 3 === 0)) {
+                let availableRequests = specialRequestTypes;
+                if (totalClientsSpawned < 10) {
+                    availableRequests = specialRequestTypes.filter(req => req.type !== 'impossible');
+                }
+                let newRequest;
+                do {
+                    newRequest = availableRequests[Math.floor(Math.random() * availableRequests.length)];
+                } while (newRequest.type === lastSpecialRequestType);
+                this.specialRequest = newRequest;
+                lastSpecialRequestType = this.specialRequest.type;
+                this.quote = this.specialRequest.text;
+            } else {
+                if (availableQuotes.length === 0) availableQuotes = [...clientQuotes];
+                const quoteIndex = Math.floor(Math.random() * availableQuotes.length);
+                this.quote = availableQuotes.splice(quoteIndex, 1)[0];
+            }
+            this.quoteVisible = true;
+            if (this.specialRequest && sound.isStarted) {
+                sound.specialRequest.triggerAttackRelease("C6", "8n");
+            }
+            speak(this.quote, this.voicePitch, this.voiceRate, this.voice);
+        }
+        
+        update(time) {
+            if (this.isInvestigating) {
+                this.quoteTimer -= MS_PER_FRAME;
+                if (this.quoteTimer <= 0 && this.investigationQuoteVisible) {
+                    this.investigationQuoteVisible = false;
+                    this.nextQuoteTime = (5000 + Math.random() * 5000);
+                }
+
+                this.nextQuoteTime -= MS_PER_FRAME;
+                if (this.nextQuoteTime <= 0 && !this.investigationQuoteVisible) {
+                    this.investigationQuoteVisible = true;
+                    this.quote = investigationQuotes[Math.floor(Math.random() * investigationQuotes.length)];
+                    this.quoteTimer = 3000;
+                }
+
+                this.moveTimer -= MS_PER_FRAME;
+                if (this.moveTimer <= 0) {
+                    const wanderZoneStart = ai.x - this.width / 2;
+                    const wanderZoneWidth = ai.width;
+                    this.targetX = wanderZoneStart + Math.random() * wanderZoneWidth;
+                    this.moveTimer = 1000 + Math.random() * 2000;
+                }
+                
+                const dx = this.targetX - this.x;
+                if (Math.abs(dx) > 1) {
+                    this.x += Math.sign(dx) * 0.5;
+                }
+                
+                this.walkBob = Math.sin(time / 250) * 1.5;
+                return;
+            }
+
+            if (this.isSwarming) {
+                if (this.x + this.width >= ai.x) {
+                    this.isInvestigating = true;
+                    this.isSwarming = false;
+                    this.quoteTimer = 3000 * Math.random();
+                    this.investigationQuoteVisible = true;
+                    this.quote = investigationQuotes[Math.floor(Math.random() * investigationQuotes.length)];
+                } else {
+                    this.x += this.speed * 3;
+                    this.walkBob = Math.sin(time / 100) * 3;
+                }
+                return;
+            }
+
+            if (this.isCaught) { this.x -= this.speed * 2; } 
+            else if (this.isAngry) { this.x += this.speed * 2.5; } 
+            else { this.x += this.speed; }
+
+            this.walkBob = Math.sin(time / 150) * 2;
+            if (this.x > INTERNAL_WIDTH / 3) this.quoteVisible = false;
+        }
+
+        draw() {
+            const clientX = this.x; const clientY = this.y + this.walkBob;
+            
+            internalCtx.save();
+            internalCtx.fillStyle = 'rgba(0, 4, 28, 0.4)';
+            internalCtx.shadowColor = '#00041c';
+            internalCtx.shadowBlur = 15;
+            internalCtx.beginPath();
+            const shadowBaseY = clientY + this.height;
+            const shadowTipY = INTERNAL_HEIGHT + 50;
+            const shadowBaseWidth = this.width * 0.9;
+            const shadowTipWidth = this.width * 1.8;
+
+            internalCtx.moveTo(clientX + (this.width - shadowBaseWidth) / 2, shadowBaseY);
+            internalCtx.lineTo(clientX + (this.width - shadowTipWidth) / 2, shadowTipY);
+            internalCtx.lineTo(clientX + (this.width + shadowTipWidth) / 2, shadowTipY);
+            internalCtx.lineTo(clientX + (this.width + shadowBaseWidth) / 2, shadowBaseY);
+            internalCtx.closePath();
+            internalCtx.fill();
+            internalCtx.restore();
+
+            internalCtx.fillStyle = this.clothingColor;
+            internalCtx.beginPath();
+            internalCtx.moveTo(clientX, clientY + this.height);
+            internalCtx.lineTo(clientX + 5, clientY + 15);
+            internalCtx.lineTo(clientX + this.width - 5, clientY + 15);
+            internalCtx.lineTo(clientX + this.width, clientY + this.height);
+            internalCtx.closePath();
+            internalCtx.fill();
+            internalCtx.fillStyle = this.skinColor;
+            internalCtx.fillRect(clientX + 10, clientY, this.width - 20, 20);
+            
+            if (this.specialRequest) {
+                internalCtx.fillStyle = '#ffff00';
+                internalCtx.beginPath();
+                internalCtx.moveTo(clientX + 8, clientY - 2);
+                internalCtx.lineTo(clientX + 8, clientY - 12);
+                internalCtx.lineTo(clientX + 16, clientY - 8);
+                internalCtx.lineTo(clientX + 22, clientY - 16);
+                internalCtx.lineTo(clientX + 28, clientY - 8);
+                internalCtx.lineTo(clientX + 36, clientY - 12);
+                internalCtx.lineTo(clientX + 36, clientY - 2);
+                internalCtx.closePath();
+                internalCtx.fill();
+            } else {
+                internalCtx.fillStyle = '#5a3d2b';
+                internalCtx.fillRect(clientX + 5, clientY - 2, this.width - 10, 5);
+                internalCtx.fillRect(clientX + 8, clientY - 8, this.width - 16, 8);
+            }
+
+            const NEON_SIGN_X = INTERNAL_WIDTH * 0.55;
+            const NEON_SIGN_WIDTH = 300;
+            const clientCenterX = clientX + this.width / 2;
+            const signCenterX = NEON_SIGN_X + NEON_SIGN_WIDTH / 2;
+            const distanceToSign = Math.abs(clientCenterX - signCenterX);
+            const lightFalloff = NEON_SIGN_WIDTH * 0.8;
+            const lightIntensity = Math.max(0, 1 - (distanceToSign / lightFalloff));
+
+            internalCtx.globalCompositeOperation = 'source-atop';
+            const redTint = 10 * lightIntensity;
+            const blueTint = 20 * (1 - lightIntensity);
+            const brightness = 0.6 + (0.4 * lightIntensity);
+            internalCtx.fillStyle = `rgba(${redTint}, 0, ${blueTint}, ${1 - brightness})`;
+            
+            internalCtx.beginPath();
+            internalCtx.moveTo(clientX, clientY + this.height);
+            internalCtx.lineTo(clientX + 5, clientY + 15);
+            internalCtx.lineTo(clientX + this.width - 5, clientY + 15);
+            internalCtx.lineTo(clientX + this.width, clientY + this.height);
+            internalCtx.closePath();
+            internalCtx.fill();
+            internalCtx.fillRect(clientX + 10, clientY, this.width - 20, 20);
+            
+            if (this.specialRequest) {
+                internalCtx.beginPath();
+                internalCtx.moveTo(clientX + 8, clientY - 2);
+                internalCtx.lineTo(clientX + 8, clientY - 12);
+                internalCtx.lineTo(clientX + 16, clientY - 8);
+                internalCtx.lineTo(clientX + 22, clientY - 16);
+                internalCtx.lineTo(clientX + 28, clientY - 8);
+                internalCtx.lineTo(clientX + 36, clientY - 12);
+                internalCtx.lineTo(clientX + 36, clientY - 2);
+                internalCtx.closePath();
+                internalCtx.fill();
+            } else {
+                internalCtx.fillRect(clientX + 5, clientY - 2, this.width - 10, 5);
+                internalCtx.fillRect(clientX + 8, clientY - 8, this.width - 16, 8);
+            }
+
+            internalCtx.globalCompositeOperation = 'source-over';
+            
+            const textYPosition = this.y - 15;
+            const textMaxWidth = 140;
+
+            if (this.isCaught) {
+                let textColor = '#00ff00';
+                if (this.feedbackType === 'negative') textColor = '#ff4141';
+                else if (this.feedbackType === 'lukewarm') textColor = '#ffffff';
+                internalCtx.fillStyle = textColor;
+                internalCtx.font = '12px "Press Start 2P"';
+                internalCtx.textAlign = 'center';
+                wrapText(internalCtx, this.feedbackQuote, this.x + this.width / 2, textYPosition, textMaxWidth, 15);
+            } else if (this.isAngry && !this.isInvestigating) {
+                internalCtx.fillStyle = '#ff4141';
+                internalCtx.font = '12px "Press Start 2P"';
+                internalCtx.textAlign = 'center';
+                wrapText(internalCtx, this.feedbackQuote, this.x + this.width / 2, textYPosition, textMaxWidth, 15);
+            } else if (this.isInvestigating && this.investigationQuoteVisible) {
+                 internalCtx.fillStyle = '#fff';
+                internalCtx.font = '12px "Press Start 2P"';
+                internalCtx.textAlign = 'center';
+                wrapText(internalCtx, this.quote, this.x + this.width / 2, textYPosition, textMaxWidth, 15);
+            } else if (this.quoteVisible && !this.isInvestigating && !this.isSwarming) {
+                internalCtx.fillStyle = this.specialRequest ? '#ffff00' : '#fff';
+                internalCtx.font = '12px "Press Start 2P"';
+                internalCtx.textAlign = 'center';
+                wrapText(internalCtx, this.quote, this.x + this.width / 2, textYPosition, textMaxWidth, 15);
+            }
+            
+            if (this.isCaught && this.caughtDesignImage) {
+                const paperX = this.x - 15;
+                const paperY = this.y + 15;
+                internalCtx.drawImage(this.caughtDesignImage, paperX, paperY, 40, 40);
+
+                const paperCenterX = paperX + 20;
+                const paperDistanceToSign = Math.abs(paperCenterX - signCenterX);
+                const paperLightIntensity = Math.max(0, 1 - (paperDistanceToSign / lightFalloff));
+                internalCtx.globalCompositeOperation = 'source-atop';
+                const pRedTint = 10 * paperLightIntensity;
+                const pBlueTint = 20 * (1 - paperLightIntensity);
+                const pBrightness = 0.75 + (0.4 * paperLightIntensity);
+                internalCtx.fillStyle = `rgba(${pRedTint}, 0, ${pBlueTint}, ${1 - pBrightness})`;
+                internalCtx.fillRect(paperX, paperY, 40, 40);
+                internalCtx.globalCompositeOperation = 'source-over';
+            }
+        }
+    }
+
+    class Projectile {
+        constructor(x, y, image, isBlank = false, designData = null) {
+            this.x = x; this.y = y; this.width = 50; this.height = 50;
+            this.speed = PROJECTILE_SPEED; this.image = image; this.isBlank = isBlank;
+            this.rotation = 0;
+            this.designData = designData;
+        }
+        update() { 
+            this.y += this.speed;
+            this.x += windStrength * 2;
+            this.rotation = Math.atan2(windStrength * 2, this.speed);
+        }
+        draw() { 
+            internalCtx.save();
+            internalCtx.translate(this.x + this.width / 2, this.y + this.height / 2);
+            internalCtx.rotate(this.rotation);
+            internalCtx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
+
+            const NEON_SIGN_X = INTERNAL_WIDTH * 0.55;
+            const NEON_SIGN_WIDTH = 300;
+            const projectileCenterX = this.x + this.width / 2;
+            const signCenterX = NEON_SIGN_X + NEON_SIGN_WIDTH / 2;
+            const distanceToSign = Math.abs(projectileCenterX - signCenterX);
+            const lightFalloff = NEON_SIGN_WIDTH * 0.8;
+            const lightIntensity = Math.max(0, 1 - (distanceToSign / lightFalloff));
+
+            internalCtx.globalCompositeOperation = 'source-atop';
+            const redTint = 10 * lightIntensity;
+            const blueTint = 20 * (1 - lightIntensity);
+            const brightness = 0.75 + (0.4 * lightIntensity);
+            internalCtx.fillStyle = `rgba(${redTint}, 0, ${blueTint}, ${1 - brightness})`;
+            internalCtx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height);
+            internalCtx.globalCompositeOperation = 'source-over';
+
+            internalCtx.restore();
+        }
+    }
+
+    class AI {
+        constructor(x, y) {
+            this.x = x; this.y = y; this.width = AI_WIDTH; this.height = AI_HEIGHT;
+            this.blinkingLights = [];
+            this.breaches = 0;
+            this.setupLights();
+        }
+        setupLights() {
+            const lightColors = ['#00ff00', '#ffff00', '#ff0000', '#00ffff'];
+            for (let i = 0; i < 10; i++) {
+                this.blinkingLights.push({
+                    x: this.x + 10 + Math.random() * (this.width - 20),
+                    y: this.y + 10 + Math.random() * (this.height - 20),
+                    radius: Math.random() * 2 + 1,
+                    color: lightColors[Math.floor(Math.random() * lightColors.length)],
+                    isOn: Math.random() > 0.5,
+                    blinkRate: Math.floor(Math.random() * 100) + 20,
+                    blinkCounter: 0,
                 });
             }
-            draw() {
-                this.blinkingLights.forEach(light => {
-                    if (light.isOn) {
-                        internalCtx.fillStyle = light.color;
-                        internalCtx.beginPath();
-                        internalCtx.arc(light.x, light.y, light.radius, 0, Math.PI * 2);
-                        internalCtx.fill();
-                    }
-                });
+        }
+        update() {
+            this.blinkingLights.forEach(light => {
+                light.blinkCounter++;
+                if (light.blinkCounter > light.blinkRate) {
+                    light.isOn = !light.isOn;
+                    light.blinkCounter = 0;
+                }
+            });
+        }
+        draw() {
+            this.blinkingLights.forEach(light => {
+                if (light.isOn) {
+                    internalCtx.fillStyle = light.color;
+                    internalCtx.beginPath();
+                    internalCtx.arc(light.x, light.y, light.radius, 0, Math.PI * 2);
+                    internalCtx.fill();
+                }
+            });
 
-                for (let i = 0; i < 3; i++) {
-                    const lightX = this.x + (this.width / 4) * (i + 1);
-                    const lightY = this.y - 30;
-                    const radius = 8;
-                    if (i < this.breaches) {
-                        internalCtx.save();
-                        internalCtx.globalCompositeOperation = 'linear-dodge';
-                        internalCtx.fillStyle = 'rgba(255, 0, 0, 0.4)';
-                        internalCtx.shadowColor = '#ff0000';
-                        internalCtx.shadowBlur = 25;
-                        internalCtx.beginPath();
-                        internalCtx.arc(lightX, lightY, radius, 0, Math.PI * 2);
-                        internalCtx.fill();
+            for (let i = 0; i < 3; i++) {
+                const lightX = this.x + (this.width / 4) * (i + 1);
+                const lightY = this.y - 30;
+                const radius = 8;
+                if (i < this.breaches) {
+                    internalCtx.save();
+                    internalCtx.globalCompositeOperation = 'linear-dodge';
+                    internalCtx.fillStyle = 'rgba(255, 0, 0, 0.4)';
+                    internalCtx.shadowColor = '#ff0000';
+                    internalCtx.shadowBlur = 25;
+                    internalCtx.beginPath();
+                    internalCtx.arc(lightX, lightY, radius, 0, Math.PI * 2);
+                    internalCtx.fill();
 
-                        const gradient = internalCtx.createRadialGradient(lightX, lightY, 0, lightX, lightY, radius / 2);
-                        gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-                        gradient.addColorStop(1, 'rgba(255, 200, 200, 0.0)');
+                    const gradient = internalCtx.createRadialGradient(lightX, lightY, 0, lightX, lightY, radius / 2);
+                    gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+                    gradient.addColorStop(1, 'rgba(255, 200, 200, 0.0)');
 
-                        internalCtx.fillStyle = gradient;
-                        internalCtx.beginPath();
-                        internalCtx.arc(lightX, lightY, radius / 0.1, 0, Math.PI * 2);
-                        internalCtx.fill();
+                    internalCtx.fillStyle = gradient;
+                    internalCtx.beginPath();
+                    internalCtx.arc(lightX, lightY, radius / 0.1, 0, Math.PI * 2);
+                    internalCtx.fill();
 
-                        internalCtx.restore();
-                    }
+                    internalCtx.restore();
                 }
             }
         }
+    }
 
-        // --- Game Initialization ---
-        function init() {
-            isGameOver = false;
-            score = 0;
-            projectiles = []; clients = []; raindrops = []; windows = []; successfulDesigns = []; vfxParticles = []; paperVFX = [];
-            lastSpawnTime = 0; parallaxOffset = 0; gameTime = 0;
-            availableQuotes = [...clientQuotes];
-            paperCount = 3;
-            hasShownFirstRestockMessage = false;
-            hasShownSpecialRequestMessage = false;
-            hasShownLukewarmMessage = false;
-            popupQueue = [];
-            isPopupActive = false;
-            totalClientsSpawned = 0;
+    // --- Game Initialization ---
+    function init() {
+        isGameOver = false;
+        score = 0;
+        projectiles = []; clients = []; raindrops = []; windows = []; successfulDesigns = []; vfxParticles = []; paperVFX = [];
+        lastSpawnTime = 0; parallaxOffset = 0; gameTime = 0;
+        availableQuotes = [...clientQuotes];
+        paperCount = 3;
+        hasShownFirstRestockMessage = false;
+        hasShownSpecialRequestMessage = false;
+        hasShownLukewarmMessage = false;
+        popupQueue = [];
+        isPopupActive = false;
+        totalClientsSpawned = 0;
+        windStrength = 0;
+        successfulDeliveries = 0;
+        windStartTime = null;
+        currentInkColorIndex = 0;
+        usedColorsInCurrentDrawing.clear();
+        colorStreak = { 0: 0, 2: 0, 3: 0 };
+        speechQueue = [];
+        synth.cancel();
+        rareQuoteUsed = false;
+        selectedPortfolioImage = null;
+        scoreSubmitted = false;
+        
+        gameOverMusicPlayer.stop();
+        backgroundMusicPlayer.volume.value = -10;
+        if (sound.isStarted) {
+            if (backgroundMusicPlayer.state !== 'started') {
+                backgroundMusicPlayer.start();
+            }
+        }
+       
+        resizeCanvas();
+        designer = new Designer(INTERNAL_WIDTH / 1.9 - DESIGNER_WIDTH / 2, BUILDING_HEIGHT - DESIGNER_HEIGHT - 22);
+        ai = new AI(INTERNAL_WIDTH - AI_WIDTH - 20, INTERNAL_HEIGHT - AI_HEIGHT - 14);
+        
+        const windowWidth = 76;
+        const windowSpacing = 14;
+        const windowOffsets = [0, 0, 0, 5, 6, 7, 8, 10, 11, 9, 10, 11, 12, 13];
+
+        windows = [];
+        for (let i = 0, x = windowSpacing - 3; x < INTERNAL_WIDTH; x += windowWidth + windowSpacing, i++) {
+             windows.push({ 
+                x, y: topMargin, width: windowWidth, height: windowHeight, 
+                openState: 0, 
+                isUsable: i >= 1,
+                xOffset: windowOffsets[i] || 0
+            });
+        }
+
+        for (let i = 0; i < 200; i++) {
+            raindrops.push({
+                x: Math.random() * INTERNAL_WIDTH, y: Math.random() * INTERNAL_HEIGHT,
+                length: Math.random() * 20 + 10, speed: Math.random() * 5 + 2
+            });
+        }
+        
+        updateUI();
+        selectPencil(document.getElementById('pencil-cyan'));
+        clearDrawing();
+        updatePaperStackUI();
+        
+        gameOverWrapper.style.display = 'none';
+        leaderboardContainer.style.display = 'none';
+        leaderboardList.innerHTML = '';
+        highscoreInputContainer.style.display = 'none';
+        restartButton.style.display = 'block';
+
+        instructionMessageEl.style.display = 'block';
+        drawHereMessageEl.style.display = 'block';
+        window.addEventListener('keydown', handleFirstKeyPress, { once: true });
+        
+        if (!animationFrameId) gameLoop(0);
+    }
+
+    function manageClients(time) {
+        if (isGameOver) return;
+        const activeClients = clients.filter(c => !c.isCaught && !c.isInvestigating).length;
+        
+        const spawnRate = Math.max(800, 3000 - totalClientsSpawned * 60);
+        const maxClients = Math.floor(1 + totalClientsSpawned / 15);
+
+        const randomSpawnDelay = spawnRate + (Math.random() * 500 - 250);
+
+        if (time - lastSpawnTime > randomSpawnDelay && activeClients < maxClients) {
+            totalClientsSpawned++;
+            if (totalClientsSpawned === 3 && !hasShownSpecialRequestMessage) {
+                queuePopup(specialRequestMessageEl, 4000, true);
+                hasShownSpecialRequestMessage = true;
+            }
+            const clientSpeed = 1.4 + totalClientsSpawned / 30;
+            clients.push(new Client(INTERNAL_HEIGHT - CLIENT_HEIGHT - 14, clientSpeed));
+            lastSpawnTime = time;
+        }
+    }
+
+    function manageSwarm(time) {
+        if (time - lastSpawnTime > 200) {
+            const swarmClient = new Client(INTERNAL_HEIGHT - CLIENT_HEIGHT - 14, 1.5 + Math.random());
+            swarmClient.x = -swarmClient.width - Math.random() * 200;
+            swarmClient.isSwarming = true;
+            clients.push(swarmClient);
+            lastSpawnTime = time;
+        }
+        if (clients.length > 15) {
+            clients.shift();
+        }
+    }
+
+    // --- Main Game Loop ---
+    let animationFrameId;
+    function gameLoop(time) {
+        gameTime = time;
+        update(time);
+        draw();
+        animationFrameId = requestAnimationFrame(gameLoop);
+    }
+
+    // --- Update Logic ---
+    function update(time) {
+        if (windStartTime !== null) {
+            const timeSinceWindStart = time - windStartTime;
+            const maxWind = Math.min(1.0, timeSinceWindStart / 90000);
+            windStrength = Math.sin(timeSinceWindStart / 8000) * maxWind;
+        } else {
             windStrength = 0;
-            successfulDeliveries = 0;
-            windStartTime = null;
-            currentInkColorIndex = 0;
-            usedColorsInCurrentDrawing.clear();
-            colorStreak = { 0: 0, 2: 0, 3: 0 };
-            speechQueue = [];
-            synth.cancel();
-            rareQuoteUsed = false;
-            selectedPortfolioImage = null;
-            scoreSubmitted = false;
-            
-            gameOverMusicPlayer.stop();
-            backgroundMusicPlayer.volume.value = -10;
-            if (soundEnabled && sound.isStarted) {
-                if (backgroundMusicPlayer.state !== 'started') {
-                    backgroundMusicPlayer.start();
+        }
+
+        if (!isGameOver) {
+            manageClients(time);
+            designer.update(time);
+            checkCollisions(time);
+        } else {
+            manageSwarm(time);
+        }
+        
+        ai.update();
+        
+        windows.forEach(win => {
+            if (!win.isUsable) return;
+            const designerMidX = designer.x + designer.width / 2;
+            const isBehind = designerMidX > win.x && designerMidX < win.x + win.width;
+            if (isBehind && win.openState < 1) win.openState += 0.1;
+            else if (!isBehind && win.openState > 0) win.openState -= 0.1;
+            win.openState = Math.max(0, Math.min(1, win.openState));
+        });
+
+        vfxParticles.forEach((p, i) => {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life--;
+            p.alpha = p.life / 60;
+            if (p.life <= 0) vfxParticles.splice(i, 1);
+        });
+        
+        paperVFX.forEach((p, i) => {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.rotation += 0.1;
+            p.life--;
+            if (p.life <= 0) paperVFX.splice(i, 1);
+        });
+
+        clients.forEach((c, i) => {
+            c.update(time);
+            if (c.x < -c.width * 2) clients.splice(i, 1);
+        });
+
+        projectiles.forEach((p, index) => {
+            p.update();
+            if (p.y > INTERNAL_HEIGHT) {
+                if (p.isBlank) {
+                    score--;
+                    vfxParticles.push({
+                        x: p.x + p.width / 2, y: INTERNAL_HEIGHT - 50,
+                        vy: -1, vx: 0,
+                        alpha: 1, life: 60, text: '-1', color: '#ff4141'
+                    });
+                } else {
+                     score--;
+                     vfxParticles.push({
+                        x: p.x + p.width / 2, y: INTERNAL_HEIGHT - 50,
+                        vy: -1, vx: 0,
+                        alpha: 1, life: 60, text: '-1', color: '#ff4141'
+                    });
+                }
+                updateUI();
+                projectiles.splice(index, 1);
+            }
+        });
+        
+        raindrops.forEach(r => {
+            r.y += r.speed;
+            r.x += windStrength * (r.speed / 2);
+            if (r.y > INTERNAL_HEIGHT) { 
+                r.y = -r.length; 
+                r.x = Math.random() * INTERNAL_WIDTH; 
+            }
+            if (r.x > INTERNAL_WIDTH) r.x = 0;
+            if (r.x < 0) r.x = INTERNAL_WIDTH;
+        });
+    }
+
+    function checkCollisions(time) {
+        clients.forEach(client => {
+            if (isGameOver || client.isCaught || client.hasReachedAI) {
+                return;
+            }
+
+            if (!client.isAngry) {
+                projectiles.forEach((p, pIndex) => {
+                    if (p.x < client.x + client.width && p.x + p.width > client.x &&
+                        p.y < client.y + client.height && p.y + p.height > client.y) {
+                        
+                        const handleNegativeOutcome = () => {
+                            client.isCaught = false;
+                            client.isAngry = true;
+                            client.feedbackQuote = negativeQuotes[Math.floor(Math.random() * negativeQuotes.length)];
+                            if(sound.isStarted) sound.fail.triggerAttackRelease("A2", "8n");
+                            speak(client.feedbackQuote, 0.8, 0.9, client.voice, true);
+                            score -= 10;
+                            vfxParticles.push({
+                                x: client.x + client.width / 2, y: client.y - 20,
+                                vy: -1, vx: 0,
+                                alpha: 1, life: 60, text: '-10', color: '#ff4141'
+                            });
+                            updateUI();
+                        };
+
+                        if (p.isBlank) { 
+                            handleNegativeOutcome();
+                        } else {
+                            client.isCaught = true; 
+                            client.caughtDesignImage = p.image;
+                            
+                            let points = 0;
+                            let fulfilledSpecial = false;
+
+                            if (client.specialRequest) {
+                                if (client.specialRequest.type === 'impossible') {
+                                    points = 0;
+                                    client.feedbackQuote = "It's just not Horizon enough.";
+                                    client.feedbackType = 'lukewarm';
+                                    if(sound.isStarted) sound.success5pt.triggerAttackRelease("C5", "16n");
+                                    speak(client.feedbackQuote, 0.9, 1.0, client.voice, true);
+                                } else if (analyzeDesign(p.designData, client.specialRequest)) {
+                                    points = 15;
+                                    fulfilledSpecial = true;
+                                    client.feedbackQuote = positiveQuotes[Math.floor(Math.random() * positiveQuotes.length)];
+                                    client.feedbackType = 'positive';
+                                    if(sound.isStarted) sound.success15pt.triggerAttackRelease(["C4", "E4", "G4"], "16n");
+                                    speak(client.feedbackQuote, 1.2, 1.4, client.voice, true);
+                                } else {
+                                    handleNegativeOutcome();
+                                    projectiles.splice(pIndex, 1);
+                                    return;
+                                }
+                            } else {
+                                const isMinimal = analyzeDesign(p.designData, { type: 'density', detail: 'minimal' });
+                                if (p.designData.usedColors.size === 3) {
+                                    points = 15;
+                                } else if (isMinimal) {
+                                    points = 5;
+                                } else {
+                                    points = 10;
+                                }
+
+                                if(p.designData.usedColors.size === 1) {
+                                    const colorIndex = p.designData.usedColors.values().next().value;
+                                    colorStreak[colorIndex]++;
+                                    Object.keys(colorStreak).forEach(key => {
+                                        if (key != colorIndex) colorStreak[key] = 0;
+                                    });
+                                    if(colorStreak[colorIndex] > 2) {
+                                        const penalty = (colorStreak[colorIndex] - 2) * 2;
+                                        points = Math.max(0, points - penalty);
+                                        const colorName = Object.keys(pencilColors).find(key => pencilColors[key] === colorIndex).replace('pencil-', '');
+                                        const quoteTemplate = colorStreakQuotes[Math.floor(Math.random() * colorStreakQuotes.length)];
+                                        client.feedbackQuote = quoteTemplate.replace('{COLOR}', colorName);
+                                        client.feedbackType = 'negative';
+                                        if(sound.isStarted) sound.fail.triggerAttackRelease("A2", "8n");
+                                        speak(client.feedbackQuote, 0.8, 1.2, client.voice, true);
+                                    }
+                                }
+
+                                if (!client.feedbackQuote) {
+                                    if (points === 5) {
+                                        client.feedbackQuote = minimalReactionQuotes[Math.floor(Math.random() * minimalReactionQuotes.length)];
+                                        client.feedbackType = 'lukewarm';
+                                        if(sound.isStarted) sound.success5pt.triggerAttackRelease("C5", "16n");
+                                        speak(client.feedbackQuote, 0.9, 1.0, client.voice, true);
+                                    } else {
+                                        let availablePositiveQuotes = [...positiveQuotes];
+                                        const rareQuote = "The worst thing I've ever seen. Approved.";
+                                        if (!rareQuoteUsed && Math.random() < 0.1) {
+                                            client.feedbackQuote = rareQuote;
+                                            rareQuoteUsed = true;
+                                        } else {
+                                            client.feedbackQuote = availablePositiveQuotes[Math.floor(Math.random() * availablePositiveQuotes.length)];
+                                        }
+                                        client.feedbackType = 'positive';
+                                        if(points === 10 && sound.isStarted) sound.success10pt.triggerAttackRelease("G5", "16n");
+                                        if(points === 15 && sound.isStarted) sound.success15pt.triggerAttackRelease(["C4", "E4", "G4"], "16n");
+                                        speak(client.feedbackQuote, 1.2, 1.4, client.voice, true);
+                                    }
+                                }
+                            }
+                            
+                            if (points === 5 && !hasShownLukewarmMessage) {
+                                hasShownLukewarmMessage = true;
+                                queuePopup(lukewarmMessageEl, 4000);
+                            }
+
+                            score += points; 
+                            vfxParticles.push({
+                                x: client.x + client.width / 2, y: client.y - 20,
+                                vy: -1, vx: 0,
+                                alpha: 1, life: 60, text: `+${points}`, color: '#00ff00'
+                            });
+                            successfulDesigns.push({ src: p.image.src, wasSpecial: fulfilledSpecial, designData: p.designData });
+
+                            successfulDeliveries++;
+                            
+                            if (successfulDeliveries === 5 && windStartTime === null) {
+                                windStartTime = time;
+                                queuePopup(windyMessageEl, 4000);
+                            }
+                            updateUI();
+                        }
+                        projectiles.splice(pIndex, 1);
+                    }
+                });
+            }
+
+            if (client.x + client.width >= ai.x) {
+                if (client.specialRequest && client.specialRequest.type !== 'impossible' && !client.isAngry) {
+                    score -= 10;
+                     vfxParticles.push({
+                        x: client.x + client.width / 2, y: client.y - 20,
+                        vy: -1, vx: 0,
+                        alpha: 1, life: 60, text: '-10', color: '#ff4141'
+                    });
+                    updateUI();
+                }
+
+                client.hasReachedAI = true;
+                client.isInvestigating = true;
+                client.isAngry = false;
+                
+                client.quoteTimer = 3000;
+                client.investigationQuoteVisible = true;
+                client.quote = investigationQuotes[Math.floor(Math.random() * investigationQuotes.length)];
+                
+                ai.breaches++;
+                if(sound.isStarted && ai.breaches < 3) sound.breach.triggerAttackRelease("A2", "8n");
+                
+                if (ai.breaches >= 3) {
+                    gameOver();
                 }
             }
-           
-            resizeCanvas();
-            designer = new Designer(INTERNAL_WIDTH / 1.9 - DESIGNER_WIDTH / 2, BUILDING_HEIGHT - DESIGNER_HEIGHT - 22);
-            ai = new AI(INTERNAL_WIDTH - AI_WIDTH - 20, INTERNAL_HEIGHT - AI_HEIGHT - 14);
-            
-            const windowWidth = 76;
-            const windowSpacing = 14;
-            const windowOffsets = [0, 0, 0, 5, 6, 7, 8, 10, 11, 9, 10, 11, 12, 13];
+        });
+    }
+    
+    // --- Drawing Functions ---
+    function drawBackground() {
+        if (backgroundImage.complete && backgroundImage.naturalHeight !== 0) {
+            internalCtx.drawImage(backgroundImage, 0, 0, INTERNAL_WIDTH, INTERNAL_HEIGHT);
+        } else {
+            const gradient = internalCtx.createLinearGradient(0, 0, 0, INTERNAL_HEIGHT);
+            gradient.addColorStop(0, '#0c0a18');
+            gradient.addColorStop(1, '#2c244d');
+            internalCtx.fillStyle = gradient;
+            internalCtx.fillRect(0, 0, INTERNAL_WIDTH, INTERNAL_HEIGHT);
+        }
+    }
+    
+    function drawPaperVFX() {
+        paperVFX.forEach(p => {
+            internalCtx.save();
+            internalCtx.translate(p.x, p.y);
+            internalCtx.rotate(p.rotation);
+            internalCtx.fillStyle = `rgba(240, 240, 240, ${p.life / 60})`;
+            internalCtx.fillRect(-p.width/2, -p.height/2, p.width, p.height);
+            internalCtx.restore();
+        });
+    }
 
-            windows = [];
-            for (let i = 0, x = windowSpacing - 3; x < INTERNAL_WIDTH; x += windowWidth + windowSpacing, i++) {
-                 windows.push({ 
-                    x, y: topMargin, width: windowWidth, height: windowHeight, 
-                    openState: 0, 
-                    isUsable: i >= 1,
-                    xOffset: windowOffsets[i] || 0
-                });
+    function drawWindowsAndDesigner() {
+        const firstWindow = windows[0];
+        if (firstWindow) {
+            internalCtx.fillStyle = '#fff';
+            for (let i = 0; i < 5; i++) {
+                internalCtx.fillRect(firstWindow.x + 20, firstWindow.y + firstWindow.height - 10 - i * 5, 40, 4);
+            }
+        }
+
+        windows.forEach(win => {
+            internalCtx.save();
+            internalCtx.beginPath();
+            internalCtx.rect(win.x, win.y, win.width, win.height);
+            internalCtx.clip();
+
+            if (win.openState > 0) {
+                internalCtx.globalCompositeOperation = 'lighter';
+                const glowPulse = (Math.sin(gameTime / 400 + win.x / 100) + 1) / 2;
+                const glowAlpha = glowPulse * 0.7 * win.openState;
+                const grad = internalCtx.createRadialGradient(win.x + win.width / 2, win.y + win.height / 2, 0, win.x + win.width / 2, win.y + win.height / 2, win.width * 0.7);
+                grad.addColorStop(0, `rgba(255, 255, 255, ${glowAlpha})`);
+                grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                internalCtx.fillStyle = grad;
+                internalCtx.fillRect(win.x, win.y, win.width, win.height);
+                internalCtx.globalCompositeOperation = 'source-over';
+            }
+            
+            designer.draw(win.openState < 1);
+            drawPaperVFX();
+            internalCtx.restore();
+
+            const slideY = win.y - (win.height * win.openState);
+            internalCtx.fillStyle = 'rgba(0, 7, 27, 0.7)';
+            internalCtx.fillRect(win.x, slideY - win.y, win.width, win.height + win.y);
+        });
+    }
+
+    function drawFramesAndDetails() {
+        internalCtx.strokeStyle = '#04010d';
+        internalCtx.lineWidth = 9;
+        internalCtx.lineCap = 'butt';
+
+        internalCtx.beginPath();
+        internalCtx.moveTo(0, topMargin);
+        internalCtx.lineTo(INTERNAL_WIDTH, topMargin);
+        internalCtx.stroke();
+
+        internalCtx.beginPath();
+        internalCtx.moveTo(0, topMargin + windowHeight);
+        internalCtx.lineTo(INTERNAL_WIDTH, topMargin + windowHeight);
+        internalCtx.stroke();
+    }
+    
+    function drawScoreVFX() {
+        vfxParticles.forEach(p => {
+            internalCtx.globalAlpha = p.alpha;
+            internalCtx.fillStyle = p.color || '#00ff00';
+            internalCtx.font = '16px "Press Start 2P"';
+            internalCtx.textAlign = 'center';
+            internalCtx.fillText(p.text, p.x, p.y);
+            internalCtx.globalAlpha = 1;
+        });
+    }
+
+    function drawRain() {
+        internalCtx.strokeStyle = 'rgba(174,194,224,0.5)';
+        internalCtx.lineWidth = 1;
+        internalCtx.lineCap = 'round';
+        raindrops.forEach(r => {
+            const windOffset = r.length * (windStrength * 2 / PROJECTILE_SPEED);
+            internalCtx.beginPath();
+            internalCtx.moveTo(r.x, r.y);
+            internalCtx.lineTo(r.x + windOffset, r.y + r.length);
+            internalCtx.stroke();
+        });
+    }
+
+    function draw() {
+        drawBackground();
+        drawWindowsAndDesigner();
+        drawFramesAndDetails();
+        ai.draw();
+        clients.forEach(c => c.draw(gameTime));
+        projectiles.forEach(p => p.draw());
+        drawScoreVFX();
+        drawRain();
+
+        gameCtx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+        gameCtx.drawImage(internalCanvas, 0, 0, gameCanvas.width, gameCanvas.height);
+    }
+
+    // --- UI and Game State Functions ---
+
+    function processPopupQueue() {
+        if (isPopupActive || popupQueue.length === 0) {
+            return;
+        }
+
+        instructionMessageEl.style.display = 'none';
+        drawHereMessageEl.style.display = 'none';
+
+        isPopupActive = true;
+        const { element, duration } = popupQueue.shift();
+
+        element.style.display = 'block';
+        setTimeout(() => {
+            element.style.display = 'none';
+            isPopupActive = false;
+            processPopupQueue();
+        }, duration);
+    }
+
+    function queuePopup(element, duration, isPriority = false) {
+        const item = { element, duration };
+        if (isPriority) {
+            popupQueue.unshift(item);
+        } else {
+            popupQueue.push(item);
+        }
+        processPopupQueue();
+    }
+
+    function updateUI() { 
+        scoreEl.textContent = `Score: ${score}`; 
+        const highlightedTopScore = document.querySelector('.leaderboard-ol li.highlight');
+        if (!highlightedTopScore) {
+             topScoreEl.textContent = `HI-SCORE: ${topScore} ${topScoreName}`;
+        }
+    }
+
+    function selectPencil(pencilElement) {
+        pencilButtons.forEach(p => p.classList.remove('selected'));
+        pencilElement.classList.add('selected');
+        currentInkColorIndex = pencilColors[pencilElement.id];
+        drawingCtx.strokeStyle = inkColors[currentInkColorIndex];
+    }
+
+    function updatePaperStackUI() {
+        const hasPaper = paperCount > 0;
+        drawingCanvas.style.display = hasPaper ? 'block' : 'none';
+        pencilContainer.style.display = hasPaper ? 'flex' : 'none';
+        trashIcon.style.display = hasPaper ? 'block' : 'none';
+        stack2El.style.display = paperCount > 1 ? 'block' : 'none';
+        stack3El.style.display = paperCount > 2 ? 'block' : 'none';
+    }
+    
+    function gameOver() {
+        if (isGameOver) return;
+        isGameOver = true;
+        
+        Object.values(sound).forEach(sfx => {
+            if (sfx && typeof sfx.triggerRelease === 'function') {
+                sfx.triggerRelease();
+            }
+        });
+        sound.rain.stop();
+        synth.cancel();
+        speechQueue = [];
+
+        if(!Tone.Master.mute) gameOverMusicPlayer.start();
+
+        setTimeout(() => {
+            backgroundMusicPlayer.stop();
+            showGameOverScreen();
+        }, 500);
+
+        instructionMessageEl.style.display = 'none';
+        drawHereMessageEl.style.display = 'none';
+
+        projectiles = [];
+        clients = clients.filter(c => c.isInvestigating);
+    }
+
+    async function showGameOverScreen() {
+        let topScores = [];
+        if (scoresCollectionRef) {
+            const scoresSnapshot = await getDocs(scoresCollectionRef);
+            topScores = scoresSnapshot.docs.map(doc => doc.data().score);
+            topScores.sort((a, b) => b - a);
+        }
+        
+        const isTopThree = score > 0 && (topScores.length < 3 || score > topScores[2]);
+        const isTopTen = score > 0 && (topScores.length < 10 || score > topScores[9]);
+
+        const savedInitials = localStorage.getItem('designersVsAiInitials');
+        if (savedInitials) {
+            initialsInput.value = savedInitials;
+        }
+
+        portfolioImagesContainer.innerHTML = '';
+
+        if (isTopThree && successfulDesigns.length > 0) {
+            selectedPortfolioImage = successfulDesigns[0].src;
+            portfolioContainer.classList.add('podium-selection-active');
+        } else {
+            portfolioContainer.classList.remove('podium-selection-active');
+        }
+
+        let isFirstItem = true;
+        successfulDesigns.forEach(design => {
+            const div = document.createElement('div');
+            div.className = 'portfolio-item';
+
+            if (isTopThree && isFirstItem) {
+                div.classList.add('selected');
+                isFirstItem = false;
+            }
+            
+            div.onclick = () => {
+                if (!scoreSubmitted && isTopThree) {
+                    document.querySelectorAll('.portfolio-item').forEach(el => el.classList.remove('selected'));
+                    div.classList.add('selected');
+                    selectedPortfolioImage = design.src;
+                } else {
+                    downloadPortfolioItem(design.src);
+                }
+            };
+
+            const img = document.createElement('img');
+            img.src = design.src;
+            
+            const icon = document.createElement('div');
+            icon.className = 'download-icon';
+            icon.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="white" style="image-rendering: pixelated;"><path d="M4 18h16v2H4z M11 4h2v10h4l-5 5-5-5h4z"></path></svg>`;
+
+            div.appendChild(img);
+            div.appendChild(icon);
+
+            if (design.wasSpecial) {
+                const medal = document.createElement('div');
+                medal.className = 'medal-icon';
+                medal.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24"><path fill="#FFD700" stroke="#F9A825" stroke-width="1.5" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"></path><path fill="#F9A825" d="M9.5,16.2L5.3,12l-1.4,1.4L9.5,19L21.5,7l-1.4-1.4L9.5,16.2z"></path></svg>`;
+                medal.style.display = 'block';
+                div.appendChild(medal);
             }
 
-            for (let i = 0; i < 200; i++) {
-                raindrops.push({
-                    x: Math.random() * INTERNAL_WIDTH, y: Math.random() * INTERNAL_HEIGHT,
-                    length: Math.random() * 20 + 10, speed: Math.random() * 5 + 2
-                });
-            }
-            
-            updateUI();
-            selectPencil(document.getElementById('pencil-cyan'));
-            clearDrawing();
-            updatePaperStackUI();
-            
-            gameOverWrapper.style.display = 'none';
-            leaderboardContainer.style.display = 'none';
-            leaderboardList.innerHTML = '';
+            portfolioImagesContainer.appendChild(div);
+        });
+
+        if (isTopThree) {
+            messageTextEl.innerHTML = "GAME OVER! THE CLIENTS DISCOVERED AI";
+            selectDrawingPrompt.style.display = 'block';
+            portfolioContainer.style.display = 'flex';
+            highscoreInputContainer.style.display = 'block';
+            restartButton.style.display = 'none';
+        } else if (isTopTen) {
+            messageTextEl.innerHTML = "GAME OVER!<br>NEW HIGH SCORE!";
+            selectDrawingPrompt.style.display = 'none';
+            portfolioContainer.style.display = 'flex';
+            portfolioContainer.classList.remove('podium-selection-active');
+            highscoreInputContainer.style.display = 'block';
+            restartButton.style.display = 'none';
+            selectedPortfolioImage = null;
+        } else {
+            messageTextEl.innerHTML = "GAME OVER<br>THE CLIENTS HAVE FIGURED OUT AI";
             highscoreInputContainer.style.display = 'none';
             restartButton.style.display = 'block';
-
-            instructionMessageEl.style.display = 'block';
-            drawHereMessageEl.style.display = 'block';
-            window.addEventListener('keydown', handleFirstKeyPress, { once: true });
-            
-            if (!animationFrameId) gameLoop(0);
+            portfolioContainer.style.display = 'flex';
+            selectDrawingPrompt.style.display = 'none';
+            await showLeaderboard(leaderboardList);
         }
+        
+        gameOverWrapper.style.display = 'flex';
+    }
 
-        function manageClients(time) {
-            if (isGameOver) return;
-            const activeClients = clients.filter(c => !c.isCaught && !c.isInvestigating).length;
-            
-            const spawnRate = Math.max(800, 3000 - totalClientsSpawned * 60);
-            const maxClients = Math.floor(1 + totalClientsSpawned / 15);
+    function clearDrawing() {
+        drawingCtx.fillStyle = '#f0f0f0';
+        drawingCtx.fillRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+        drawingCtx.strokeStyle = inkColors[currentInkColorIndex];
+        drawingCtx.lineCap = 'round';
+        drawingCtx.lineJoin = 'round';
+        // Ensure no effects are active that could alter pixel colors
+        drawingCtx.shadowColor = 'transparent';
+        drawingCtx.shadowBlur = 0;
+        drawingCtx.globalCompositeOperation = 'source-over';
+        usedColorsInCurrentDrawing.clear();
+    }
+    
+    function isCanvasBlank(canvas) {
+        const context = canvas.getContext('2d');
+        const pixelBuffer = new Uint32Array(context.getImageData(0, 0, canvas.width, canvas.height).data.buffer);
+        return !pixelBuffer.some(color => color !== 0 && color !== 0xfff0f0f0);
+    }
 
-            const randomSpawnDelay = spawnRate + (Math.random() * 500 - 250);
+    function wrapText(context, text, x, y, maxWidth, lineHeight) {
+        const words = text.split(' ');
+        let line = '';
+        const lines = [];
 
-            if (time - lastSpawnTime > randomSpawnDelay && activeClients < maxClients) {
-                totalClientsSpawned++;
-                if (totalClientsSpawned === 3 && !hasShownSpecialRequestMessage) {
-                    queuePopup(specialRequestMessageEl, 4000, true);
-                    hasShownSpecialRequestMessage = true;
-                }
-                const clientSpeed = 1.4 + totalClientsSpawned / 30;
-                clients.push(new Client(INTERNAL_HEIGHT - CLIENT_HEIGHT - 14, clientSpeed));
-                lastSpawnTime = time;
-            }
-        }
-
-        function manageSwarm(time) {
-            if (time - lastSpawnTime > 200) {
-                const swarmClient = new Client(INTERNAL_HEIGHT - CLIENT_HEIGHT - 14, 1.5 + Math.random());
-                swarmClient.x = -swarmClient.width - Math.random() * 200;
-                swarmClient.isSwarming = true;
-                clients.push(swarmClient);
-                lastSpawnTime = time;
-            }
-            if (clients.length > 15) {
-                clients.shift();
-            }
-        }
-
-        // --- Main Game Loop ---
-        let animationFrameId;
-        function gameLoop(time) {
-            gameTime = time;
-            update(time);
-            draw();
-            animationFrameId = requestAnimationFrame(gameLoop);
-        }
-
-        // --- Update Logic ---
-        function update(time) {
-            if (windStartTime !== null) {
-                const timeSinceWindStart = time - windStartTime;
-                const maxWind = Math.min(1.0, timeSinceWindStart / 90000);
-                windStrength = Math.sin(timeSinceWindStart / 8000) * maxWind;
+        for(let n = 0; n < words.length; n++) {
+            const testLine = line + words[n] + ' ';
+            const metrics = context.measureText(testLine);
+            const testWidth = metrics.width;
+            if (testWidth > maxWidth && n > 0) {
+                lines.push(line.trim());
+                line = words[n] + ' ';
             } else {
-                windStrength = 0;
+                line = testLine;
             }
+        }
+        lines.push(line.trim());
 
-            if (!isGameOver) {
-                manageClients(time);
-                designer.update(time);
-                checkCollisions(time);
+        const totalTextHeight = lines.length * lineHeight;
+        const topOfTextBlock = y - totalTextHeight;
+
+        for (let i = 0; i < lines.length; i++) {
+            context.fillText(lines[i], x, topOfTextBlock + (i + 1) * lineHeight);
+        }
+    }
+
+    function dropDesign() {
+        if (isGameOver) return;
+        
+        if (paperCount <= 0) {
+            if (!hasShownFirstRestockMessage) {
+                if(sound.isStarted) sound.outOfPaper.triggerAttackRelease("A2", "16n");
+                restockMessageEl.style.display = 'block';
+                hasShownFirstRestockMessage = true;
+                setTimeout(() => {
+                    restockMessageEl.style.display = 'none';
+                }, 3000);
             } else {
-                manageSwarm(time);
+                 if(sound.isStarted) sound.outOfPaper.triggerAttackRelease("A2", "16n");
             }
-            
-            ai.update();
-            
-            windows.forEach(win => {
-                if (!win.isUsable) return;
-                const designerMidX = designer.x + designer.width / 2;
-                const isBehind = designerMidX > win.x && designerMidX < win.x + win.width;
-                if (isBehind && win.openState < 1) win.openState += 0.1;
-                else if (!isBehind && win.openState > 0) win.openState -= 0.1;
-                win.openState = Math.max(0, Math.min(1, win.openState));
-            });
+            return;
+        }
+        
+        const designerMidX = designer.x + designer.width / 2;
+        const currentWindow = windows.find(win => designerMidX > win.x && designerMidX < win.x + win.width);
 
-            vfxParticles.forEach((p, i) => {
-                p.x += p.vx;
-                p.y += p.vy;
-                p.life--;
-                p.alpha = p.life / 60;
-                if (p.life <= 0) vfxParticles.splice(i, 1);
-            });
-            
-            paperVFX.forEach((p, i) => {
-                p.x += p.vx;
-                p.y += p.vy;
-                p.rotation += 0.1;
-                p.life--;
-                if (p.life <= 0) paperVFX.splice(i, 1);
-            });
-
-            clients.forEach((c, i) => {
-                c.update(time);
-                if (c.x < -c.width * 2) clients.splice(i, 1);
-            });
-
-            projectiles.forEach((p, index) => {
-                p.update();
-                if (p.y > INTERNAL_HEIGHT) {
-                    if (p.isBlank) {
-                        score--;
-                        vfxParticles.push({
-                            x: p.x + p.width / 2, y: INTERNAL_HEIGHT - 50,
-                            vy: -1, vx: 0,
-                            alpha: 1, life: 60, text: '-1', color: '#ff4141'
-                        });
-                    } else {
-                         score--;
-                         vfxParticles.push({
-                            x: p.x + p.width / 2, y: INTERNAL_HEIGHT - 50,
-                            vy: -1, vx: 0,
-                            alpha: 1, life: 60, text: '-1', color: '#ff4141'
-                        });
+        if (currentWindow) {
+            if (currentWindow.isUsable && currentWindow.openState >= 1) {
+                if(sound.isStarted) sound.drop.triggerAttackRelease("C4", "16n");
+                const isBlank = isCanvasBlank(drawingCanvas);
+                const designData = {
+                    imageData: drawingCtx.getImageData(0, 0, drawingCanvas.width, drawingCanvas.height),
+                    usedColors: new Set(usedColorsInCurrentDrawing)
+                };
+                const designImage = new Image();
+                designImage.src = drawingCanvas.toDataURL();
+                designImage.onload = () => {
+                    const projectile = new Projectile(
+                        designer.x + (designer.width / 2) - 25, 
+                        BUILDING_HEIGHT - 20, 
+                        designImage, 
+                        isBlank,
+                        designData
+                    );
+                    projectiles.push(projectile);
+                    paperCount--;
+                    updatePaperStackUI();
+                    if (paperCount === 0 && !hasShownFirstRestockMessage) {
+                        if(sound.isStarted) sound.outOfPaper.triggerAttackRelease("A2", "16n");
+                        restockMessageEl.style.display = 'block';
+                        hasShownFirstRestockMessage = true;
+                        setTimeout(() => {
+                            restockMessageEl.style.display = 'none';
+                        }, 3000);
                     }
-                    updateUI();
-                    projectiles.splice(index, 1);
-                }
-            });
-            
-            raindrops.forEach(r => {
-                r.y += r.speed;
-                r.x += windStrength * (r.speed / 2);
-                if (r.y > INTERNAL_HEIGHT) { 
-                    r.y = -r.length; 
-                    r.x = Math.random() * INTERNAL_WIDTH; 
-                }
-                if (r.x > INTERNAL_WIDTH) r.x = 0;
-                if (r.x < 0) r.x = INTERNAL_WIDTH;
-            });
+                    clearDrawing();
+                };
+            } else if (!currentWindow.isUsable) {
+                if(sound.isStarted) sound.noDrop.triggerAttackRelease("A1", "16n");
+            }
         }
+    }
 
-        function checkCollisions(time) {
-            clients.forEach(client => {
-                if (isGameOver || client.isCaught || client.hasReachedAI) {
-                    return;
-                }
+    function downloadPortfolioItem(src) {
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        const img = new Image();
+        img.src = src;
+        img.onload = () => {
+            tempCanvas.width = 200;
+            tempCanvas.height = 220;
+            tempCtx.fillStyle = '#f0f0f0';
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            tempCtx.drawImage(img, 25, 10, 150, 150);
+            
+            tempCtx.fillStyle = 'rgba(0,0,0,0.7)';
+            tempCtx.fillRect(0, 170, tempCanvas.width, 40);
 
-                if (!client.isAngry) {
-                    projectiles.forEach((p, pIndex) => {
-                        if (p.x < client.x + client.width && p.x + p.width > client.x &&
-                            p.y < client.y + client.height && p.y + p.height > client.y) {
-                            
-                            const handleNegativeOutcome = () => {
-                                client.isCaught = false;
-                                client.isAngry = true;
-                                client.feedbackQuote = negativeQuotes[Math.floor(Math.random() * negativeQuotes.length)];
-                                if(soundEnabled) sound.fail.triggerAttackRelease("A2", "8n");
-                                speak(client.feedbackQuote, 0.8, 0.9, client.voice, true);
-                                score -= 10;
-                                vfxParticles.push({
-                                    x: client.x + client.width / 2, y: client.y - 20,
-                                    vy: -1, vx: 0,
-                                    alpha: 1, life: 60, text: '-10', color: '#ff4141'
-                                });
-                                updateUI();
-                            };
+            tempCtx.fillStyle = '#fff';
+            tempCtx.font = '10px "Press Start 2P"';
+            tempCtx.textAlign = 'center';
+            tempCtx.fillText("This was created in", 100, 190);
+            tempCtx.fillText("DESIGNERS vs. AI", 100, 205);
 
-                            if (p.isBlank) { 
-                                handleNegativeOutcome();
-                            } else {
-                                client.isCaught = true; 
-                                client.caughtDesignImage = p.image;
-                                
-                                let points = 0;
-                                let fulfilledSpecial = false;
+            const dataUrl = tempCanvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = 'design-vs-ai-creation.png';
+            link.href = dataUrl;
+            link.click();
 
-                                if (client.specialRequest) {
-                                    if (client.specialRequest.type === 'impossible') {
-                                        points = 0;
-                                        client.feedbackQuote = "It's just not Horizon enough.";
-                                        client.feedbackType = 'lukewarm';
-                                        if(soundEnabled) sound.success5pt.triggerAttackRelease("C5", "16n");
-                                        speak(client.feedbackQuote, 0.9, 1.0, client.voice, true);
-                                    } else if (analyzeDesign(p.designData, client.specialRequest)) {
-                                        points = 15;
-                                        fulfilledSpecial = true;
-                                        client.feedbackQuote = positiveQuotes[Math.floor(Math.random() * positiveQuotes.length)];
-                                        client.feedbackType = 'positive';
-                                        if(soundEnabled) sound.success15pt.triggerAttackRelease(["C4", "E4", "G4"], "16n");
-                                        speak(client.feedbackQuote, 1.2, 1.4, client.voice, true);
-                                    } else {
-                                        handleNegativeOutcome();
-                                        projectiles.splice(pIndex, 1);
-                                        return;
-                                    }
-                                } else {
-                                    const isMinimal = analyzeDesign(p.designData, { type: 'density', detail: 'minimal' });
-                                    if (p.designData.usedColors.size === 3) {
-                                        points = 15;
-                                    } else if (isMinimal) {
-                                        points = 5;
-                                    } else {
-                                        points = 10;
-                                    }
+            copiedMessageEl.style.display = 'block';
+            setTimeout(() => { copiedMessageEl.style.display = 'none' }, 2000);
+        };
+    }
 
-                                    if(p.designData.usedColors.size === 1) {
-                                        const colorIndex = p.designData.usedColors.values().next().value;
-                                        colorStreak[colorIndex]++;
-                                        Object.keys(colorStreak).forEach(key => {
-                                            if (key != colorIndex) colorStreak[key] = 0;
-                                        });
-                                        if(colorStreak[colorIndex] > 2) {
-                                            const penalty = (colorStreak[colorIndex] - 2) * 2;
-                                            points = Math.max(0, points - penalty);
-                                            const colorName = Object.keys(pencilColors).find(key => pencilColors[key] === colorIndex).replace('pencil-', '');
-                                            const quoteTemplate = colorStreakQuotes[Math.floor(Math.random() * colorStreakQuotes.length)];
-                                            client.feedbackQuote = quoteTemplate.replace('{COLOR}', colorName);
-                                            client.feedbackType = 'negative';
-                                            if(soundEnabled) sound.fail.triggerAttackRelease("A2", "8n");
-                                            speak(client.feedbackQuote, 0.8, 1.2, client.voice, true);
-                                        }
-                                    }
-
-                                    if (!client.feedbackQuote) {
-                                        if (points === 5) {
-                                            client.feedbackQuote = minimalReactionQuotes[Math.floor(Math.random() * minimalReactionQuotes.length)];
-                                            client.feedbackType = 'lukewarm';
-                                            if(soundEnabled) sound.success5pt.triggerAttackRelease("C5", "16n");
-                                            speak(client.feedbackQuote, 0.9, 1.0, client.voice, true);
-                                        } else {
-                                            let availablePositiveQuotes = [...positiveQuotes];
-                                            const rareQuote = "The worst thing I've ever seen. Approved.";
-                                            if (!rareQuoteUsed && Math.random() < 0.1) {
-                                                client.feedbackQuote = rareQuote;
-                                                rareQuoteUsed = true;
-                                            } else {
-                                                client.feedbackQuote = availablePositiveQuotes[Math.floor(Math.random() * availablePositiveQuotes.length)];
-                                            }
-                                            client.feedbackType = 'positive';
-                                            if(points === 10 && soundEnabled) sound.success10pt.triggerAttackRelease("G5", "16n");
-                                            if(points === 15 && soundEnabled) sound.success15pt.triggerAttackRelease(["C4", "E4", "G4"], "16n");
-                                            speak(client.feedbackQuote, 1.2, 1.4, client.voice, true);
-                                        }
-                                    }
-                                }
-                                
-                                if (points === 5 && !hasShownLukewarmMessage) {
-                                    hasShownLukewarmMessage = true;
-                                    queuePopup(lukewarmMessageEl, 4000);
-                                }
-
-                                score += points; 
-                                vfxParticles.push({
-                                    x: client.x + client.width / 2, y: client.y - 20,
-                                    vy: -1, vx: 0,
-                                    alpha: 1, life: 60, text: `+${points}`, color: '#00ff00'
-                                });
-                                successfulDesigns.push({ src: p.image.src, wasSpecial: fulfilledSpecial, designData: p.designData });
-
-                                successfulDeliveries++;
-                                
-                                if (successfulDeliveries === 5 && windStartTime === null) {
-                                    windStartTime = time;
-                                    queuePopup(windyMessageEl, 4000);
-                                }
-                                updateUI();
-                            }
-                            projectiles.splice(pIndex, 1);
+    function analyzeDesign(designData, request) {
+        const { imageData: imageDataObject, usedColors } = designData;
+        
+        switch(request.type) {
+            case 'color_count':
+                return usedColors.size === request.detail;
+            case 'density':
+                const imageData = imageDataObject.data;
+                const canvasWidth = imageDataObject.width;
+                const canvasHeight = imageDataObject.height;
+                let drawnPixels = 0;
+                for (let i = 0; i < imageData.length; i += 4) {
+                    const a = imageData[i+3];
+                    if (a > 0) {
+                        const r = imageData[i];
+                        const g = imageData[i+1];
+                        const b = imageData[i+2];
+                        if (r !== 240 || g !== 240 || b !== 240) {
+                            drawnPixels++;
                         }
-                    });
-                }
-
-                if (client.x + client.width >= ai.x) {
-                    if (client.specialRequest && client.specialRequest.type !== 'impossible' && !client.isAngry) {
-                        score -= 10;
-                         vfxParticles.push({
-                            x: client.x + client.width / 2, y: client.y - 20,
-                            vy: -1, vx: 0,
-                            alpha: 1, life: 60, text: '-10', color: '#ff4141'
-                        });
-                        updateUI();
-                    }
-
-                    client.hasReachedAI = true;
-                    client.isInvestigating = true;
-                    client.isAngry = false;
-                    
-                    client.quoteTimer = 3000;
-                    client.investigationQuoteVisible = true;
-                    client.quote = investigationQuotes[Math.floor(Math.random() * investigationQuotes.length)];
-                    
-                    ai.breaches++;
-                    if(soundEnabled && ai.breaches < 3) sound.breach.triggerAttackRelease("A2", "8n");
-                    
-                    if (ai.breaches >= 3) {
-                        gameOver();
                     }
                 }
-            });
+                const totalPixels = canvasWidth * canvasHeight;
+                const density = drawnPixels / totalPixels;
+                if (request.detail === 'dense') return density > 0.20;
+                if (request.detail === 'minimal') return density < 0.08;
+                break;
+            case 'color':
+                const colorIndexMap = {'#00ffff': 0, '#ff00ff': 2, '#ffc300': 3};
+                const requiredIndex = colorIndexMap[request.detail];
+                return usedColors.size === 1 && usedColors.has(requiredIndex);
+            case 'color_combo':
+                return usedColors.size === 2 && usedColors.has(request.detail[0]) && usedColors.has(request.detail[1]);
+            case 'zone':
+                return isZoneEmpty(imageDataObject, request.detail);
+            case 'impossible':
+                return false; 
         }
+
+        return false;
+    }
+
+    function isZoneEmpty(imageDataObject, zone) {
+        const data = imageDataObject.data;
+        const width = imageDataObject.width;
+        const height = imageDataObject.height;
+
+        let startX = 0, endX = width;
+        let startY = 0, endY = height;
+
+        switch(zone) {
+            case 'left_empty':   endX = Math.floor(width / 2); break;
+            case 'right_empty':  startX = Math.ceil(width / 2); break;
+            case 'top_empty':    endY = Math.floor(height / 2); break;
+            case 'bottom_empty': startY = Math.ceil(height / 2); break;
+        }
+
+        for (let y = startY; y < endY; y++) {
+            for (let x = startX; x < endX; x++) {
+                const i = (y * width + x) * 4;
+                const alpha = data[i + 3];
+                if (alpha > 0 && (data[i] !== 240 || data[i+1] !== 240 || data[i+2] !== 240)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+
+    async function showLeaderboard(listElement) {
+        if (!scoresCollectionRef) return;
+        const querySnapshot = await getDocs(scoresCollectionRef);
         
-        // --- Drawing Functions ---
-        function drawBackground() {
-            if (backgroundImage.complete && backgroundImage.naturalHeight !== 0) {
-                internalCtx.drawImage(backgroundImage, 0, 0, INTERNAL_WIDTH, INTERNAL_HEIGHT);
+        const scores = querySnapshot.docs.map(doc => ({...doc.data(), id: doc.id}));
+        scores.sort((a, b) => b.score - a.score);
+        const topTen = scores.slice(0, 10);
+        
+        listElement.innerHTML = '';
+        
+        let scoreCount = 0;
+        topTen.forEach(data => {
+            const li = document.createElement('li');
+            li.textContent = `${data.name}: ${data.score}`;
+            if (newlySubmittedScoreTimestamp && data.timestamp && data.timestamp.toMillis() === newlySubmittedScoreTimestamp) {
+                li.classList.add('highlight');
+            }
+            listElement.appendChild(li);
+            scoreCount++;
+        });
+
+        for (let i = scoreCount; i < 10; i++) {
+            const li = document.createElement('li');
+            li.textContent = `DVA: 0`;
+            listElement.appendChild(li);
+        }
+
+        leaderboardContainer.style.display = 'flex';
+    }
+
+    function updatePodium(topThree) {
+        const frameSpots = [
+            { img: document.getElementById('frame-img-1'), name: document.getElementById('frame-name-1'), score: document.getElementById('frame-score-1') },
+            { img: document.getElementById('frame-img-2'), name: document.getElementById('frame-name-2'), score: document.getElementById('frame-score-2') },
+            { img: document.getElementById('frame-img-3'), name: document.getElementById('frame-name-3'), score: document.getElementById('frame-score-3') }
+        ];
+        
+        const placeholderImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAAAUklEQVR42mP8/5+BggAX/x/AwMvLCwMDw/Dw8A8MDPh/M/y/Gf5/hv8f8P8H/H8A/w/8/wP+f0D/H6B/A/2/Af2/Af0/oP8H9P8A/T8gAADT9yH8e0f1xAAAAABJRU5ErkJggg==';
+
+        const sortedTopThree = [...topThree].sort((a, b) => b.score - a.score);
+
+        for(let i = 0; i < 3; i++) {
+            const data = sortedTopThree[i];
+            if (data && data.drawing && data.score > 0) {
+                frameSpots[i].img.src = data.drawing;
+                frameSpots[i].name.textContent = `${i + 1}. ${data.name}`;
+                frameSpots[i].score.textContent = data.score;
             } else {
-                const gradient = internalCtx.createLinearGradient(0, 0, 0, INTERNAL_HEIGHT);
-                gradient.addColorStop(0, '#0c0a18');
-                gradient.addColorStop(1, '#2c244d');
-                internalCtx.fillStyle = gradient;
-                internalCtx.fillRect(0, 0, INTERNAL_WIDTH, INTERNAL_HEIGHT);
+                frameSpots[i].img.src = placeholderImage;
+                frameSpots[i].name.textContent = `${i + 1}. DVA`;
+                frameSpots[i].score.textContent = data ? data.score : '0';
             }
         }
+    }
+
+    // --- Event Listeners ---
+    function handleFirstKeyPress() {
+        instructionMessageEl.style.display = 'none';
+        window.removeEventListener('keydown', handleFirstKeyPress);
+    }
+    
+    window.addEventListener('keydown', (e) => {
+        keys[e.key] = true;
+        if (e.code === 'Space') { e.preventDefault(); dropDesign(); }
+    });
+    window.addEventListener('keyup', (e) => { keys[e.key] = false; });
+    restartButton.addEventListener('click', () => { 
+        newlySubmittedScoreTimestamp = null;
+        init(); 
+    });
+    submitScoreButton.addEventListener('click', async () => {
+        if (submitScoreButton.disabled) return;
+
+        const newName = initialsInput.value.substring(0, 3).toUpperCase() || 'AAA';
+        localStorage.setItem('designersVsAiInitials', newName);
         
-        function drawPaperVFX() {
-            paperVFX.forEach(p => {
-                internalCtx.save();
-                internalCtx.translate(p.x, p.y);
-                internalCtx.rotate(p.rotation);
-                internalCtx.fillStyle = `rgba(240, 240, 240, ${p.life / 60})`;
-                internalCtx.fillRect(-p.width/2, -p.height/2, p.width, p.height);
-                internalCtx.restore();
-            });
-        }
-
-        function drawWindowsAndDesigner() {
-            const firstWindow = windows[0];
-            if (firstWindow) {
-                internalCtx.fillStyle = '#fff';
-                for (let i = 0; i < 5; i++) {
-                    internalCtx.fillRect(firstWindow.x + 20, firstWindow.y + firstWindow.height - 10 - i * 5, 40, 4);
-                }
-            }
-
-            windows.forEach(win => {
-                internalCtx.save();
-                internalCtx.beginPath();
-                internalCtx.rect(win.x, win.y, win.width, win.height);
-                internalCtx.clip();
-
-                if (win.openState > 0) {
-                    internalCtx.globalCompositeOperation = 'lighter';
-                    const glowPulse = (Math.sin(gameTime / 400 + win.x / 100) + 1) / 2;
-                    const glowAlpha = glowPulse * 0.7 * win.openState;
-                    const grad = internalCtx.createRadialGradient(win.x + win.width / 2, win.y + win.height / 2, 0, win.x + win.width / 2, win.y + win.height / 2, win.width * 0.7);
-                    grad.addColorStop(0, `rgba(255, 255, 255, ${glowAlpha})`);
-                    grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
-                    internalCtx.fillStyle = grad;
-                    internalCtx.fillRect(win.x, win.y, win.width, win.height);
-                    internalCtx.globalCompositeOperation = 'source-over';
-                }
-                
-                designer.draw(win.openState < 1);
-                drawPaperVFX();
-                internalCtx.restore();
-
-                const slideY = win.y - (win.height * win.openState);
-                internalCtx.fillStyle = 'rgba(0, 7, 27, 0.7)';
-                internalCtx.fillRect(win.x, slideY - win.y, win.width, win.height + win.y);
-            });
-        }
-
-        function drawFramesAndDetails() {
-            internalCtx.strokeStyle = '#04010d';
-            internalCtx.lineWidth = 9;
-            internalCtx.lineCap = 'butt';
-
-            internalCtx.beginPath();
-            internalCtx.moveTo(0, topMargin);
-            internalCtx.lineTo(INTERNAL_WIDTH, topMargin);
-            internalCtx.stroke();
-
-            internalCtx.beginPath();
-            internalCtx.moveTo(0, topMargin + windowHeight);
-            internalCtx.lineTo(INTERNAL_WIDTH, topMargin + windowHeight);
-            internalCtx.stroke();
-        }
-        
-        function drawScoreVFX() {
-            vfxParticles.forEach(p => {
-                internalCtx.globalAlpha = p.alpha;
-                internalCtx.fillStyle = p.color || '#00ff00';
-                internalCtx.font = '16px "Press Start 2P"';
-                internalCtx.textAlign = 'center';
-                internalCtx.fillText(p.text, p.x, p.y);
-                internalCtx.globalAlpha = 1;
-            });
-        }
-
-        function drawRain() {
-            internalCtx.strokeStyle = 'rgba(174,194,224,0.5)';
-            internalCtx.lineWidth = 1;
-            internalCtx.lineCap = 'round';
-            raindrops.forEach(r => {
-                const windOffset = r.length * (windStrength * 2 / PROJECTILE_SPEED);
-                internalCtx.beginPath();
-                internalCtx.moveTo(r.x, r.y);
-                internalCtx.lineTo(r.x + windOffset, r.y + r.length);
-                internalCtx.stroke();
-            });
-        }
-
-        function draw() {
-            drawBackground();
-            drawWindowsAndDesigner();
-            drawFramesAndDetails();
-            ai.draw();
-            clients.forEach(c => c.draw(gameTime));
-            projectiles.forEach(p => p.draw());
-            drawScoreVFX();
-            drawRain();
-
-            gameCtx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
-            gameCtx.drawImage(internalCanvas, 0, 0, gameCanvas.width, gameCanvas.height);
-        }
-
-        // --- UI and Game State Functions ---
-
-        function processPopupQueue() {
-            if (isPopupActive || popupQueue.length === 0) {
-                return;
-            }
-
-            instructionMessageEl.style.display = 'none';
-            drawHereMessageEl.style.display = 'none';
-
-            isPopupActive = true;
-            const { element, duration } = popupQueue.shift();
-
-            element.style.display = 'block';
-            setTimeout(() => {
-                element.style.display = 'none';
-                isPopupActive = false;
-                processPopupQueue();
-            }, duration);
-        }
-
-        function queuePopup(element, duration, isPriority = false) {
-            const item = { element, duration };
-            if (isPriority) {
-                popupQueue.unshift(item);
-            } else {
-                popupQueue.push(item);
-            }
-            processPopupQueue();
-        }
-
-        function updateUI() { 
-            scoreEl.textContent = `Score: ${score}`; 
-            const highlightedTopScore = document.querySelector('.leaderboard-ol li.highlight');
-            if (!highlightedTopScore) {
-                 topScoreEl.textContent = `HI-SCORE: ${topScore} ${topScoreName}`;
-            }
-        }
-
-        function selectPencil(pencilElement) {
-            pencilButtons.forEach(p => p.classList.remove('selected'));
-            pencilElement.classList.add('selected');
-            currentInkColorIndex = pencilColors[pencilElement.id];
-            drawingCtx.strokeStyle = inkColors[currentInkColorIndex];
-        }
-
-        function updatePaperStackUI() {
-            const hasPaper = paperCount > 0;
-            drawingCanvas.style.display = hasPaper ? 'block' : 'none';
-            pencilContainer.style.display = hasPaper ? 'flex' : 'none';
-            trashIcon.style.display = hasPaper ? 'block' : 'none';
-            stack2El.style.display = paperCount > 1 ? 'block' : 'none';
-            stack3El.style.display = paperCount > 2 ? 'block' : 'none';
-        }
-        
-        function gameOver() {
-            if (isGameOver) return;
-            isGameOver = true;
-            
-            Object.values(sound).forEach(sfx => {
-                if (sfx && typeof sfx.triggerRelease === 'function') {
-                    sfx.triggerRelease();
-                }
-            });
-            if(soundEnabled) sound.rain.stop();
-            synth.cancel();
-            speechQueue = [];
-
-            if(soundEnabled && !Tone.Master.mute) gameOverMusicPlayer.start();
-
-            setTimeout(() => {
-                if(soundEnabled) backgroundMusicPlayer.stop();
-                showGameOverScreen();
-            }, 500);
-
-            instructionMessageEl.style.display = 'none';
-            drawHereMessageEl.style.display = 'none';
-
-            projectiles = [];
-            clients = clients.filter(c => c.isInvestigating);
-        }
-
-        async function showGameOverScreen() {
-            let topScores = [];
-            if (scoresCollectionRef) {
+        let topScores = [];
+        if (scoresCollectionRef) {
+            try {
                 const scoresSnapshot = await getDocs(scoresCollectionRef);
                 topScores = scoresSnapshot.docs.map(doc => doc.data().score);
                 topScores.sort((a, b) => b - a);
+            } catch (e) {
+                console.error("Error getting scores for validation:", e);
             }
-            
-            const isTopThree = score > 0 && (topScores.length < 3 || score > topScores[2]);
-            const isTopTen = score > 0 && (topScores.length < 10 || score > topScores[9]);
+        }
+        const isTopThree = score > 0 && (topScores.length < 3 || score > topScores[2]);
 
-            const savedInitials = localStorage.getItem('designersVsAiInitials');
-            if (savedInitials) {
-                initialsInput.value = savedInitials;
-            }
+        if (isTopThree && !selectedPortfolioImage) {
+             selectDrawingPrompt.innerHTML = '<p style="font-size: 12px; color: #ff4141;">Please select a drawing first!</p>';
+             return;
+        }
 
-            portfolioImagesContainer.innerHTML = '';
+        submitScoreButton.disabled = true;
+        submitScoreButton.textContent = 'Submitting...';
+        
+        const timestamp = new Date();
+        newlySubmittedScoreTimestamp = timestamp.getTime();
 
-            if (isTopThree && successfulDesigns.length > 0) {
-                selectedPortfolioImage = successfulDesigns[0].src;
-                portfolioContainer.classList.add('podium-selection-active');
-            } else {
+        const newScore = {
+            score: score,
+            name: newName,
+            timestamp: timestamp,
+            drawing: selectedPortfolioImage // This will be null for scores not in top 3
+        };
+        
+        if (scoresCollectionRef) {
+            try {
+                await addDoc(scoresCollectionRef, newScore);
+                scoreSubmitted = true;
                 portfolioContainer.classList.remove('podium-selection-active');
-            }
-
-            let isFirstItem = true;
-            successfulDesigns.forEach(design => {
-                const div = document.createElement('div');
-                div.className = 'portfolio-item';
-
-                if (isTopThree && isFirstItem) {
-                    div.classList.add('selected');
-                    isFirstItem = false;
-                }
-                
-                div.onclick = () => {
-                    if (!scoreSubmitted && isTopThree) {
-                        document.querySelectorAll('.portfolio-item').forEach(el => el.classList.remove('selected'));
-                        div.classList.add('selected');
-                        selectedPortfolioImage = design.src;
-                    } else {
-                        downloadPortfolioItem(design.src);
-                    }
-                };
-
-                const img = document.createElement('img');
-                img.src = design.src;
-                
-                const icon = document.createElement('div');
-                icon.className = 'download-icon';
-                icon.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="white" style="image-rendering: pixelated;"><path d="M4 18h16v2H4z M11 4h2v10h4l-5 5-5-5h4z"></path></svg>`;
-
-                div.appendChild(img);
-                div.appendChild(icon);
-
-                if (design.wasSpecial) {
-                    const medal = document.createElement('div');
-                    medal.className = 'medal-icon';
-                    medal.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24"><path fill="#FFD700" stroke="#F9A825" stroke-width="1.5" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"></path><path fill="#F9A825" d="M9.5,16.2L5.3,12l-1.4,1.4L9.5,19L21.5,7l-1.4-1.4L9.5,16.2z"></path></svg>`;
-                    medal.style.display = 'block';
-                    div.appendChild(medal);
-                }
-
-                portfolioImagesContainer.appendChild(div);
-            });
-
-            if (isTopThree) {
                 messageTextEl.innerHTML = "GAME OVER! THE CLIENTS DISCOVERED AI";
-                selectDrawingPrompt.style.display = 'block';
-                portfolioContainer.style.display = 'flex';
-                highscoreInputContainer.style.display = 'block';
-                restartButton.style.display = 'none';
-            } else if (isTopTen) {
-                messageTextEl.innerHTML = "GAME OVER!<br>NEW HIGH SCORE!";
-                selectDrawingPrompt.style.display = 'none';
-                portfolioContainer.style.display = 'flex';
-                portfolioContainer.classList.remove('podium-selection-active');
-                highscoreInputContainer.style.display = 'block';
-                restartButton.style.display = 'none';
-                selectedPortfolioImage = null;
-            } else {
-                messageTextEl.innerHTML = "GAME OVER<br>THE CLIENTS HAVE FIGURED OUT AI";
-                highscoreInputContainer.style.display = 'none';
-                restartButton.style.display = 'block';
-                portfolioContainer.style.display = 'flex';
                 selectDrawingPrompt.style.display = 'none';
                 await showLeaderboard(leaderboardList);
+            } catch (error) {
+                console.error("Error adding document: ", error);
+                leaderboardList.innerHTML = '<li>Error submitting score</li>';
             }
-            
-            gameOverWrapper.style.display = 'flex';
-        }
-
-        function clearDrawing() {
-            drawingCtx.fillStyle = '#f0f0f0';
-            drawingCtx.fillRect(0, 0, drawingCanvas.width, drawingCanvas.height);
-            drawingCtx.strokeStyle = inkColors[currentInkColorIndex];
-            drawingCtx.lineCap = 'round';
-            drawingCtx.lineJoin = 'round';
-            // Ensure no effects are active that could alter pixel colors
-            drawingCtx.shadowColor = 'transparent';
-            drawingCtx.shadowBlur = 0;
-            drawingCtx.globalCompositeOperation = 'source-over';
-            usedColorsInCurrentDrawing.clear();
         }
         
-        function isCanvasBlank(canvas) {
-            const context = canvas.getContext('2d');
-            const pixelBuffer = new Uint32Array(context.getImageData(0, 0, canvas.width, canvas.height).data.buffer);
-            return !pixelBuffer.some(color => color !== 0 && color !== 0xfff0f0f0);
+        highscoreInputContainer.style.display = 'none';
+        portfolioContainer.style.display = 'flex';
+        restartButton.style.display = 'block';
+        submitScoreButton.disabled = false;
+        submitScoreButton.textContent = 'Submit';
+    });
+
+    muteButton.addEventListener('click', () => {
+        Tone.Master.mute = !Tone.Master.mute;
+        if (Tone.Master.mute) {
+            synth.cancel();
+            speechQueue = [];
         }
+        soundOnIcon.style.display = Tone.Master.mute ? 'none' : 'block';
+        soundOffIcon.style.display = Tone.Master.mute ? 'block' : 'none';
+    });
 
-        function wrapText(context, text, x, y, maxWidth, lineHeight) {
-            const words = text.split(' ');
-            let line = '';
-            const lines = [];
-
-            for(let n = 0; n < words.length; n++) {
-                const testLine = line + words[n] + ' ';
-                const metrics = context.measureText(testLine);
-                const testWidth = metrics.width;
-                if (testWidth > maxWidth && n > 0) {
-                    lines.push(line.trim());
-                    line = words[n] + ' ';
-                } else {
-                    line = testLine;
-                }
-            }
-            lines.push(line.trim());
-
-            const totalTextHeight = lines.length * lineHeight;
-            const topOfTextBlock = y - totalTextHeight;
-
-            for (let i = 0; i < lines.length; i++) {
-                context.fillText(lines[i], x, topOfTextBlock + (i + 1) * lineHeight);
-            }
-        }
-
-        function dropDesign() {
-            if (isGameOver) return;
+    pencilButtons.forEach(pencil => {
+        pencil.addEventListener('click', () => selectPencil(pencil));
+    });
+    
+    trashIcon.addEventListener('click', () => {
+        if (paperCount > 0) {
+            if(sound.isStarted) sound.trash.triggerAttackRelease("4n");
             
-            if (paperCount <= 0) {
-                if (!hasShownFirstRestockMessage) {
-                    if(soundEnabled) sound.outOfPaper.triggerAttackRelease("A2", "16n");
-                    restockMessageEl.style.display = 'block';
-                    hasShownFirstRestockMessage = true;
-                    setTimeout(() => {
-                        restockMessageEl.style.display = 'none';
-                    }, 3000);
-                } else {
-                     if(soundEnabled) sound.outOfPaper.triggerAttackRelease("A2", "16n");
-                }
-                return;
-            }
-            
-            const designerMidX = designer.x + designer.width / 2;
-            const currentWindow = windows.find(win => designerMidX > win.x && designerMidX < win.x + win.width);
+            paperCount--;
+            updatePaperStackUI();
+            clearDrawing();
 
-            if (currentWindow) {
-                if (currentWindow.isUsable && currentWindow.openState >= 1) {
-                    if(soundEnabled) sound.drop.triggerAttackRelease("C4", "16n");
-                    const isBlank = isCanvasBlank(drawingCanvas);
-                    const designData = {
-                        imageData: drawingCtx.getImageData(0, 0, drawingCanvas.width, drawingCanvas.height),
-                        usedColors: new Set(usedColorsInCurrentDrawing)
-                    };
-                    const designImage = new Image();
-                    designImage.src = drawingCanvas.toDataURL();
-                    designImage.onload = () => {
-                        const projectile = new Projectile(
-                            designer.x + (designer.width / 2) - 25, 
-                            BUILDING_HEIGHT - 20, 
-                            designImage, 
-                            isBlank,
-                            designData
-                        );
-                        projectiles.push(projectile);
-                        paperCount--;
-                        updatePaperStackUI();
-                        if (paperCount === 0 && !hasShownFirstRestockMessage) {
-                            if(soundEnabled) sound.outOfPaper.triggerAttackRelease("A2", "16n");
-                            restockMessageEl.style.display = 'block';
-                            hasShownFirstRestockMessage = true;
-                            setTimeout(() => {
-                                restockMessageEl.style.display = 'none';
-                            }, 3000);
-                        }
-                        clearDrawing();
-                    };
-                } else if (!currentWindow.isUsable) {
-                    if(soundEnabled) sound.noDrop.triggerAttackRelease("A1", "16n");
-                }
+            if (paperCount === 0 && !hasShownFirstRestockMessage) {
+                if(sound.isStarted) sound.outOfPaper.triggerAttackRelease("A2", "16n");
+                restockMessageEl.style.display = 'block';
+                hasShownFirstRestockMessage = true;
+                setTimeout(() => {
+                    restockMessageEl.style.display = 'none';
+                }, 3000);
             }
         }
+    });
 
-        function downloadPortfolioItem(src) {
-            const tempCanvas = document.createElement('canvas');
-            const tempCtx = tempCanvas.getContext('2d');
-            const img = new Image();
-            img.src = src;
-            img.onload = () => {
-                tempCanvas.width = 200;
-                tempCanvas.height = 220;
-                tempCtx.fillStyle = '#f0f0f0';
-                tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-                tempCtx.drawImage(img, 25, 10, 150, 150);
-                
-                tempCtx.fillStyle = 'rgba(0,0,0,0.7)';
-                tempCtx.fillRect(0, 170, tempCanvas.width, 40);
-
-                tempCtx.fillStyle = '#fff';
-                tempCtx.font = '10px "Press Start 2P"';
-                tempCtx.textAlign = 'center';
-                tempCtx.fillText("This was created in", 100, 190);
-                tempCtx.fillText("DESIGNERS vs. AI", 100, 205);
-
-                const dataUrl = tempCanvas.toDataURL('image/png');
-                const link = document.createElement('a');
-                link.download = 'design-vs-ai-creation.png';
-                link.href = dataUrl;
-                link.click();
-
-                copiedMessageEl.style.display = 'block';
-                setTimeout(() => { copiedMessageEl.style.display = 'none' }, 2000);
-            };
-        }
-
-        function analyzeDesign(designData, request) {
-            const { imageData: imageDataObject, usedColors } = designData;
-            
-            switch(request.type) {
-                case 'color_count':
-                    return usedColors.size === request.detail;
-                case 'density':
-                    const imageData = imageDataObject.data;
-                    const canvasWidth = imageDataObject.width;
-                    const canvasHeight = imageDataObject.height;
-                    let drawnPixels = 0;
-                    for (let i = 0; i < imageData.length; i += 4) {
-                        const a = imageData[i+3];
-                        if (a > 0) {
-                            const r = imageData[i];
-                            const g = imageData[i+1];
-                            const b = imageData[i+2];
-                            if (r !== 240 || g !== 240 || b !== 240) {
-                                drawnPixels++;
-                            }
-                        }
-                    }
-                    const totalPixels = canvasWidth * canvasHeight;
-                    const density = drawnPixels / totalPixels;
-                    if (request.detail === 'dense') return density > 0.20;
-                    if (request.detail === 'minimal') return density < 0.08;
-                    break;
-                case 'color':
-                    const colorIndexMap = {'#00ffff': 0, '#ff00ff': 2, '#ffc300': 3};
-                    const requiredIndex = colorIndexMap[request.detail];
-                    return usedColors.size === 1 && usedColors.has(requiredIndex);
-                case 'color_combo':
-                    return usedColors.size === 2 && usedColors.has(request.detail[0]) && usedColors.has(request.detail[1]);
-                case 'zone':
-                    return isZoneEmpty(imageDataObject, request.detail);
-                case 'impossible':
-                    return false; 
-            }
-
-            return false;
-        }
-
-        function isZoneEmpty(imageDataObject, zone) {
-            const data = imageDataObject.data;
-            const width = imageDataObject.width;
-            const height = imageDataObject.height;
-
-            let startX = 0, endX = width;
-            let startY = 0, endY = height;
-
-            switch(zone) {
-                case 'left_empty':   endX = Math.floor(width / 2); break;
-                case 'right_empty':  startX = Math.ceil(width / 2); break;
-                case 'top_empty':    endY = Math.floor(height / 2); break;
-                case 'bottom_empty': startY = Math.ceil(height / 2); break;
-            }
-
-            for (let y = startY; y < endY; y++) {
-                for (let x = startX; x < endX; x++) {
-                    const i = (y * width + x) * 4;
-                    const alpha = data[i + 3];
-                    if (alpha > 0 && (data[i] !== 240 || data[i+1] !== 240 || data[i+2] !== 240)) {
-                        return false;
-                    }
-                }
-            }
-            return true;
-        }
-
-
-        async function showLeaderboard(listElement) {
-            if (!scoresCollectionRef) return;
-            const querySnapshot = await getDocs(scoresCollectionRef);
-            
-            const scores = querySnapshot.docs.map(doc => ({...doc.data(), id: doc.id}));
-            scores.sort((a, b) => b.score - a.score);
-            const topTen = scores.slice(0, 10);
-            
-            listElement.innerHTML = '';
-            
-            let scoreCount = 0;
-            topTen.forEach(data => {
-                const li = document.createElement('li');
-                li.textContent = `${data.name}: ${data.score}`;
-                if (newlySubmittedScoreTimestamp && data.timestamp && data.timestamp.toMillis() === newlySubmittedScoreTimestamp) {
-                    li.classList.add('highlight');
-                }
-                listElement.appendChild(li);
-                scoreCount++;
-            });
-
-            for (let i = scoreCount; i < 10; i++) {
-                const li = document.createElement('li');
-                li.textContent = `DVA: 0`;
-                listElement.appendChild(li);
-            }
-
-            leaderboardContainer.style.display = 'flex';
-        }
-
-        function updatePodium(topThree) {
-            const frameSpots = [
-                { img: document.getElementById('frame-img-1'), name: document.getElementById('frame-name-1'), score: document.getElementById('frame-score-1') },
-                { img: document.getElementById('frame-img-2'), name: document.getElementById('frame-name-2'), score: document.getElementById('frame-score-2') },
-                { img: document.getElementById('frame-img-3'), name: document.getElementById('frame-name-3'), score: document.getElementById('frame-score-3') }
-            ];
-            
-            const placeholderImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAAAUklEQVR42mP8/5+BggAX/x/AwMvLCwMDw/Dw8A8MDPh/M/y/Gf5/hv8f8P8H/H8A/w/8/wP+f0D/H6B/A/2/Af2/Af0/oP8H9P8A/T8gAADT9yH8e0f1xAAAAABJRU5ErkJggg==';
-
-            const sortedTopThree = [...topThree].sort((a, b) => b.score - a.score);
-
-            for(let i = 0; i < 3; i++) {
-                const data = sortedTopThree[i];
-                if (data && data.drawing && data.score > 0) {
-                    frameSpots[i].img.src = data.drawing;
-                    frameSpots[i].name.textContent = `${i + 1}. ${data.name}`;
-                    frameSpots[i].score.textContent = data.score;
-                } else {
-                    frameSpots[i].img.src = placeholderImage;
-                    frameSpots[i].name.textContent = `${i + 1}. DVA`;
-                    frameSpots[i].score.textContent = data ? data.score : '0';
-                }
-            }
-        }
-
-        // --- Event Listeners ---
-        function handleFirstKeyPress() {
-            instructionMessageEl.style.display = 'none';
-            window.removeEventListener('keydown', handleFirstKeyPress);
-        }
+    function getMousePos(canvas, evt) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        return { 
+            x: (evt.clientX - rect.left) * scaleX, 
+            y: (evt.clientY - rect.top) * scaleY
+        };
+    }
+    drawingCanvas.addEventListener('mousedown', (e) => { 
+        isDrawing = true; 
+        lastPoint = getMousePos(drawingCanvas, e); 
+        drawHereMessageEl.style.display='none'; 
+        usedColorsInCurrentDrawing.add(currentInkColorIndex);
+        lastPointTime = performance.now();
+        lastLineWidth = 2; // Start thinner
+    });
+    drawingCanvas.addEventListener('mousemove', (e) => {
+        if (!isDrawing) return;
         
-        window.addEventListener('keydown', (e) => {
-            keys[e.key] = true;
-            if (e.code === 'Space') { e.preventDefault(); dropDesign(); }
-        });
-        window.addEventListener('keyup', (e) => { keys[e.key] = false; });
-        restartButton.addEventListener('click', () => { 
-            newlySubmittedScoreTimestamp = null;
-            init(); 
-        });
-        submitScoreButton.addEventListener('click', async () => {
-            if (submitScoreButton.disabled) return;
-
-            const newName = initialsInput.value.substring(0, 3).toUpperCase() || 'AAA';
-            localStorage.setItem('designersVsAiInitials', newName);
-            
-            let topScores = [];
-            if (scoresCollectionRef) {
-                try {
-                    const scoresSnapshot = await getDocs(scoresCollectionRef);
-                    topScores = scoresSnapshot.docs.map(doc => doc.data().score);
-                    topScores.sort((a, b) => b - a);
-                } catch (e) {
-                    console.error("Error getting scores for validation:", e);
-                }
-            }
-            const isTopThree = score > 0 && (topScores.length < 3 || score > topScores[2]);
-
-            if (isTopThree && !selectedPortfolioImage) {
-                 selectDrawingPrompt.innerHTML = '<p style="font-size: 12px; color: #ff4141;">Please select a drawing first!</p>';
-                 return;
-            }
-
-            submitScoreButton.disabled = true;
-            submitScoreButton.textContent = 'Submitting...';
-            
-            const timestamp = new Date();
-            newlySubmittedScoreTimestamp = timestamp.getTime();
-
-            const newScore = {
-                score: score,
-                name: newName,
-                timestamp: timestamp,
-                drawing: selectedPortfolioImage // This will be null for scores not in top 3
-            };
-            
-            if (scoresCollectionRef) {
-                try {
-                    await addDoc(scoresCollectionRef, newScore);
-                    scoreSubmitted = true;
-                    portfolioContainer.classList.remove('podium-selection-active');
-                    messageTextEl.innerHTML = "GAME OVER! THE CLIENTS DISCOVERED AI";
-                    selectDrawingPrompt.style.display = 'none';
-                    await showLeaderboard(leaderboardList);
-                } catch (error) {
-                    console.error("Error adding document: ", error);
-                    leaderboardList.innerHTML = '<li>Error submitting score</li>';
-                }
-            }
-            
-            highscoreInputContainer.style.display = 'none';
-            portfolioContainer.style.display = 'flex';
-            restartButton.style.display = 'block';
-            submitScoreButton.disabled = false;
-            submitScoreButton.textContent = 'Submit';
-        });
-
-        muteButton.addEventListener('click', () => {
-            if (!soundEnabled) return;
-            Tone.Master.mute = !Tone.Master.mute;
-            if (Tone.Master.mute) {
-                synth.cancel();
-                speechQueue = [];
-            }
-            soundOnIcon.style.display = Tone.Master.mute ? 'none' : 'block';
-            soundOffIcon.style.display = Tone.Master.mute ? 'block' : 'none';
-        });
-
-        pencilButtons.forEach(pencil => {
-            pencil.addEventListener('click', () => selectPencil(pencil));
-        });
+        const currentPoint = getMousePos(drawingCanvas, e);
+        const currentTime = performance.now();
+        const timeDelta = currentTime - lastPointTime;
+        const distance = Math.hypot(currentPoint.x - lastPoint.x, currentPoint.y - lastPoint.y);
         
-        trashIcon.addEventListener('click', () => {
-            if (paperCount > 0) {
-                if(soundEnabled) sound.trash.triggerAttackRelease("4n");
-                
-                paperCount--;
-                updatePaperStackUI();
-                clearDrawing();
+        const velocity = timeDelta > 0 ? distance / timeDelta : 0;
 
-                if (paperCount === 0 && !hasShownFirstRestockMessage) {
-                    if(soundEnabled) sound.outOfPaper.triggerAttackRelease("A2", "16n");
-                    restockMessageEl.style.display = 'block';
-                    hasShownFirstRestockMessage = true;
-                    setTimeout(() => {
-                        restockMessageEl.style.display = 'none';
-                    }, 3000);
-                }
-            }
-        });
+        const maxLineWidth = 12;
+        const minLineWidth = 0.5;
+        const targetLineWidth = Math.max(minLineWidth, maxLineWidth - velocity * 4);
 
-        function getMousePos(canvas, evt) {
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            return { 
-                x: (evt.clientX - rect.left) * scaleX, 
-                y: (evt.clientY - rect.top) * scaleY
-            };
-        }
-        drawingCanvas.addEventListener('mousedown', (e) => { 
-            isDrawing = true; 
-            lastPoint = getMousePos(drawingCanvas, e); 
-            drawHereMessageEl.style.display='none'; 
-            usedColorsInCurrentDrawing.add(currentInkColorIndex);
-            lastPointTime = performance.now();
-            lastLineWidth = 2; // Start thinner
-        });
-        drawingCanvas.addEventListener('mousemove', (e) => {
-            if (!isDrawing) return;
-            
-            const currentPoint = getMousePos(drawingCanvas, e);
-            const currentTime = performance.now();
-            const timeDelta = currentTime - lastPointTime;
-            const distance = Math.hypot(currentPoint.x - lastPoint.x, currentPoint.y - lastPoint.y);
-            
-            const velocity = timeDelta > 0 ? distance / timeDelta : 0;
+        const smoothedLineWidth = lastLineWidth * 0.6 + targetLineWidth * 0.4;
 
-            const maxLineWidth = 12;
-            const minLineWidth = 0.5;
-            const targetLineWidth = Math.max(minLineWidth, maxLineWidth - velocity * 4);
-
-            const smoothedLineWidth = lastLineWidth * 0.6 + targetLineWidth * 0.4;
-
-            drawingCtx.lineWidth = smoothedLineWidth;
-            drawingCtx.beginPath();
-            drawingCtx.moveTo(lastPoint.x, lastPoint.y);
-            drawingCtx.lineTo(currentPoint.x, currentPoint.y);
-            drawingCtx.stroke();
-            
-            lastPoint = currentPoint;
-            lastPointTime = currentTime;
-            lastLineWidth = smoothedLineWidth;
-        });
-        drawingCanvas.addEventListener('mouseup', () => { isDrawing = false; });
-        drawingCanvas.addEventListener('mouseleave', () => { isDrawing = false; });
+        drawingCtx.lineWidth = smoothedLineWidth;
+        drawingCtx.beginPath();
+        drawingCtx.moveTo(lastPoint.x, lastPoint.y);
+        drawingCtx.lineTo(currentPoint.x, currentPoint.y);
+        drawingCtx.stroke();
         
-        // --- Canvas Resizing ---
-        function resizeCanvas() {
-            const containerRect = gameContainer.getBoundingClientRect();
-            gameCanvas.width = containerRect.width;
-            gameCanvas.height = containerRect.height;
-            
-            const scale = gameCanvas.width / INTERNAL_WIDTH;
-            uiScaler.style.transform = `scale(${scale})`;
-        }
+        lastPoint = currentPoint;
+        lastPointTime = currentTime;
+        lastLineWidth = smoothedLineWidth;
+    });
+    drawingCanvas.addEventListener('mouseup', () => { isDrawing = false; });
+    drawingCanvas.addEventListener('mouseleave', () => { isDrawing = false; });
+    
+    // --- Canvas Resizing ---
+    function resizeCanvas() {
+        const containerRect = gameContainer.getBoundingClientRect();
+        gameCanvas.width = containerRect.width;
+        gameCanvas.height = containerRect.height;
         
-        // --- Start Screen Animation ---
-        let startScreenAnimationId;
-        function animateStartScreen() {
-            const rect = startScreenCanvas.getBoundingClientRect();
-            startScreenCanvas.width = rect.width;
-            startScreenCanvas.height = rect.height;
+        const scale = gameCanvas.width / INTERNAL_WIDTH;
+        uiScaler.style.transform = `scale(${scale})`;
+    }
+    
+    // --- Start Screen Animation ---
+    let startScreenAnimationId;
+    function animateStartScreen() {
+        const rect = startScreenCanvas.getBoundingClientRect();
+        startScreenCanvas.width = rect.width;
+        startScreenCanvas.height = rect.height;
 
-            startScreenCtx.clearRect(0, 0, startScreenCanvas.width, startScreenCanvas.height);
-            startScreenCtx.strokeStyle = 'rgba(174,194,224,0.5)';
-            startScreenCtx.lineWidth = 1;
-            startScreenCtx.lineCap = 'round';
+        startScreenCtx.clearRect(0, 0, startScreenCanvas.width, startScreenCanvas.height);
+        startScreenCtx.strokeStyle = 'rgba(174,194,224,0.5)';
+        startScreenCtx.lineWidth = 1;
+        startScreenCtx.lineCap = 'round';
 
-            startScreenRaindrops.forEach(r => {
-                r.y += r.speed;
-                if (r.y > startScreenCanvas.height) {
-                    r.y = -r.length;
-                    r.x = Math.random() * startScreenCanvas.width;
-                }
-                startScreenCtx.beginPath();
-                startScreenCtx.moveTo(r.x, r.y);
-                startScreenCtx.lineTo(r.x, r.y + r.length);
-                startScreenCtx.stroke();
-            });
-
-            startScreenAnimationId = requestAnimationFrame(animateStartScreen);
-        }
-
-        // --- Initial Start ---
-        startScreen.addEventListener('click', async (e) => {
-            if (!isGameLoaded) return;
-
-            if (soundEnabled && !sound.isStarted) {
-                await Tone.start();
-                sound.isStarted = true;
+        startScreenRaindrops.forEach(r => {
+            r.y += r.speed;
+            if (r.y > startScreenCanvas.height) {
+                r.y = -r.length;
+                r.x = Math.random() * startScreenCanvas.width;
             }
-            cancelAnimationFrame(startScreenAnimationId);
-            startScreen.style.display = 'none';
-            if(soundEnabled) sound.rain.start();
-            if (soundEnabled && Tone.Transport.state !== 'started') {
-                Tone.Transport.start();
-            }
-            init();
+            startScreenCtx.beginPath();
+            startScreenCtx.moveTo(r.x, r.y);
+            startScreenCtx.lineTo(r.x, r.y + r.length);
+            startScreenCtx.stroke();
         });
 
-        // --- Setup on Load ---
-        
-        for (let i = 0; i < 400; i++) {
-            startScreenRaindrops.push({
-                x: Math.random() * window.innerWidth,
-                y: Math.random() * window.innerHeight,
-                length: Math.random() * 20 + 10,
-                speed: Math.random() * 5 + 2
-            });
-        }
-        animateStartScreen();
-        setupFirebase();
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
+        startScreenAnimationId = requestAnimationFrame(animateStartScreen);
+    }
 
-        const imageLoadPromise = new Promise((resolve) => {
-            if (startScreenImage.complete) {
+    // --- Initial Start ---
+    startScreen.addEventListener('click', async (e) => {
+        if (!isGameLoaded) return;
+
+        if (!sound.isStarted) {
+            await Tone.start();
+            sound.isStarted = true;
+        }
+        cancelAnimationFrame(startScreenAnimationId);
+        startScreen.style.display = 'none';
+        sound.rain.start();
+        if (Tone.Transport.state !== 'started') {
+            Tone.Transport.start();
+        }
+        init();
+    });
+
+    // --- Setup on Load ---
+    
+    for (let i = 0; i < 400; i++) {
+        startScreenRaindrops.push({
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight,
+            length: Math.random() * 20 + 10,
+            speed: Math.random() * 5 + 2
+        });
+    }
+    animateStartScreen();
+    setupFirebase();
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    const imageLoadPromise = new Promise((resolve) => {
+        if (startScreenImage.complete) {
+            resolve();
+        } else {
+            startScreenImage.onload = resolve;
+            startScreenImage.onerror = () => {
+                console.error("Failed to load start screen image.");
                 resolve();
-            } else {
-                startScreenImage.onload = resolve;
-                startScreenImage.onerror = () => {
-                    console.error("Failed to load start screen image.");
-                    resolve();
-                };
-            }
-        });
+            };
+        }
+    });
 
-        const tonePromise = soundEnabled ? Tone.loaded() : Promise.resolve();
+    const tonePromise = Tone.loaded();
 
-        Promise.all([imageLoadPromise, tonePromise, scoresLoadedPromise]).then(() => {
-            isGameLoaded = true;
-            startScreen.style.backgroundImage = `url('${startScreenImage.src}')`;
-            startScreenLeaderboardEl.style.opacity = 1;
-            loadingContainer.style.display = 'none';
-            startPromptEl.style.display = 'block';
-            startScreen.classList.add('loaded');
-        });
-    };
+    Promise.all([imageLoadPromise, tonePromise, scoresLoadedPromise]).then(() => {
+        isGameLoaded = true;
+        startScreen.style.backgroundImage = `url('${startScreenImage.src}')`;
+        startScreenLeaderboardEl.style.opacity = 1;
+        loadingContainer.style.display = 'none';
+        startPromptEl.style.display = 'block';
+        startScreen.classList.add('loaded');
+    });
+ 
 
 </script>
 </body>
