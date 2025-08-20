@@ -713,11 +713,11 @@
         firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             // --- PASTE YOUR FIREBASE CONFIGURATION OBJECT HERE ---
             apiKey: "AIzaSyBglciCKGBvNki8z3Ln6RwRTw4JqGRpeiA",
-  authDomain: "designers-vs-ai-game.firebaseapp.com",
-  projectId: "designers-vs-ai-game",
-  storageBucket: "designers-vs-ai-game.firebasestorage.app",
-  messagingSenderId: "503158591070",
-  appId: "1:503158591070:web:145b1e4eb8c63036726ecf"
+            authDomain: "designers-vs-ai-game.firebaseapp.com",
+            projectId: "designers-vs-ai-game",
+            storageBucket: "designers-vs-ai-game.appspot.com",
+            messagingSenderId: "503158591070",
+            appId: "1:503158591070:web:145b1e4eb8c63036726ecf"
         };
     } catch (e) {
         console.error("Could not parse Firebase config:", e);
@@ -746,7 +746,7 @@
             db = getFirestore(app);
             auth = getAuth(app);
             
-            if (typeof __initial_auth_token !== 'undefined') {
+            if (typeof __initial_auth_token !== 'undefined' && firebaseConfig.authDomain.includes('firebaseapp.com')) {
                 await signInWithCustomToken(auth, __initial_auth_token);
             } else {
                 await signInAnonymously(auth);
@@ -2429,6 +2429,4 @@
         soundOffIcon.style.display = Tone.Master.mute ? 'block' : 'none';
     });
 
-    pencilButtons.forEach(pencil => {
-        pencil.addEventListener('click', () => selectPencil(pencil));
-    })
+    pencilButto
