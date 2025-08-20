@@ -707,19 +707,23 @@
     let db, auth, scoresCollectionRef;
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'designers-vs-ai-default';
     let firebaseConfig;
+
     try {
-       const firebaseConfig = {
-  apiKey: "AIzaSyBglciCKGBvNki8z3Ln6RwRTw4JqGRpeiA",
+        // This will use the environment's config when available
+        firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            // --- PASTE YOUR FIREBASE CONFIGURATION OBJECT HERE ---
+            apiKey: "AIzaSyBglciCKGBvNki8z3Ln6RwRTw4JqGRpeiA",
   authDomain: "designers-vs-ai-game.firebaseapp.com",
   projectId: "designers-vs-ai-game",
   storageBucket: "designers-vs-ai-game.firebasestorage.app",
   messagingSenderId: "503158591070",
   appId: "1:503158591070:web:145b1e4eb8c63036726ecf"
-};
+        };
     } catch (e) {
         console.error("Could not parse Firebase config:", e);
         firebaseConfig = null;
     }
+
 
     let scoresLoadedResolve;
     const scoresLoadedPromise = new Promise(resolve => {
@@ -727,9 +731,10 @@
     });
 
     async function setupFirebase() {
-        if (!firebaseConfig || !firebaseConfig.apiKey) {
-            console.log("Firebase config not found. High scores will be local.");
+        if (!firebaseConfig || firebaseConfig.apiKey === "YOUR_API_KEY") {
+            console.log("Firebase config not found or is a placeholder. High scores will be local.");
             startScreenListEl.innerHTML = '<li>Local Mode</li>';
+            updatePodium([]);
             if (scoresLoadedResolve) {
                 scoresLoadedResolve();
                 scoresLoadedResolve = null;
@@ -2390,7 +2395,7 @@
             score: score,
             name: newName,
             timestamp: timestamp,
-            drawing: selectedPortfolioImage
+            drawing: selectedPortfolioImage // This will be null for scores not in top 3
         };
         
         if (scoresCollectionRef) {
@@ -2426,15 +2431,4 @@
 
     pencilButtons.forEach(pencil => {
         pencil.addEventListener('click', () => selectPencil(pencil));
-    });
-    
-    trashIcon.addEventListener('click', () => {
-        if (paperCount > 0) {
-            if (sound.isStarted) sound.trash.triggerAttackRelease("4n");
-            
-            paperCount--;
-            updatePaperStackUI();
-            clearDrawing();
-
-            if (paperCount === 0 && !hasShownFirstRestockMessage) {
-         
+    })
