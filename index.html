@@ -706,24 +706,17 @@
     // --- Firebase Setup ---
     let db, auth, scoresCollectionRef;
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'designers-vs-ai-default';
-    let firebaseConfig;
-
-    try {
-        // This will use the environment's config when available
-        firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            // --- PASTE YOUR FIREBASE CONFIGURATION OBJECT HERE ---
-            apiKey: "AIzaSyBglciCKGBvNki8z3Ln6RwRTw4JqGRpeiA",
-            authDomain: "designers-vs-ai-game.firebaseapp.com",
-            projectId: "designers-vs-ai-game",
-            storageBucket: "designers-vs-ai-game.appspot.com",
-            messagingSenderId: "503158591070",
-            appId: "1:503158591070:web:145b1e4eb8c63036726ecf"
-        };
-    } catch (e) {
-        console.error("Could not parse Firebase config:", e);
-        firebaseConfig = null;
-    }
-
+    
+    // --- IMPORTANT ---
+    // Replace this with your own Firebase project configuration
+    const firebaseConfig = {
+         apiKey: "AIzaSyBglciCKGBvNki8z3Ln6RwRTw4JqGRpeiA",
+  authDomain: "designers-vs-ai-game.firebaseapp.com",
+  projectId: "designers-vs-ai-game",
+  storageBucket: "designers-vs-ai-game.firebasestorage.app",
+  messagingSenderId: "503158591070",
+  appId: "1:503158591070:web:145b1e4eb8c63036726ecf"
+    };
 
     let scoresLoadedResolve;
     const scoresLoadedPromise = new Promise(resolve => {
@@ -731,7 +724,18 @@
     });
 
     async function setupFirebase() {
-        if (!firebaseConfig || firebaseConfig.apiKey === "YOUR_API_KEY") {
+        let finalConfig = firebaseConfig;
+        
+        // Use environment's config if available (for development)
+        if (typeof __firebase_config !== 'undefined') {
+            try {
+                finalConfig = JSON.parse(__firebase_config);
+            } catch(e) {
+                console.error("Could not parse environment Firebase config:", e);
+            }
+        }
+
+        if (!finalConfig || finalConfig.apiKey === "YOUR_API_KEY") {
             console.log("Firebase config not found or is a placeholder. High scores will be local.");
             startScreenListEl.innerHTML = '<li>Local Mode</li>';
             updatePodium([]);
@@ -742,11 +746,11 @@
             return;
         }
         try {
-            const app = initializeApp(firebaseConfig);
+            const app = initializeApp(finalConfig);
             db = getFirestore(app);
             auth = getAuth(app);
             
-            if (typeof __initial_auth_token !== 'undefined' && firebaseConfig.authDomain.includes('firebaseapp.com')) {
+            if (typeof __initial_auth_token !== 'undefined') {
                 await signInWithCustomToken(auth, __initial_auth_token);
             } else {
                 await signInAnonymously(auth);
@@ -2429,4 +2433,4 @@
         soundOffIcon.style.display = Tone.Master.mute ? 'block' : 'none';
     });
 
-    pencilButto
+    pencil
