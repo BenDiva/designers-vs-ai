@@ -220,15 +220,9 @@
             display: none;
             z-index: 100;
         }
-        #windy-message, #lukewarm-message {
+        #restock-message, #windy-message, #lukewarm-message {
             top: 35%;
             left: 50%;
-            transform: translate(-50%, -50%);
-        }
-
-        #restock-message {
-            top: 35%;
-            left: 7.5%;
             transform: translate(-50%, -50%);
         }
 
@@ -292,17 +286,24 @@
             font-size: 12px;
             color: #00ffcc;
             border: 2px solid #00ffcc;
-            padding: 8px 16px;
+            padding: 16px 16px 12px 16px;
             background: rgba(0,0,0,0.6);
-            width: 320px;
+            width: 400px;
             text-align: center;
-            margin-top: 260px; /* Pushes the leaderboard down */
+            margin-top: 260px;
             opacity: 0;
             transition: opacity 0.5s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         #start-screen-leaderboard h3 {
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             text-decoration: underline;
+        }
+        #start-screen-leaderboard .leaderboard-ol {
+            column-count: 2;
+            column-gap: 20px;
         }
         #start-prompt-area {
             height: 50px;
@@ -358,6 +359,10 @@
             border: 2px solid #ff4141;
             font-size: 24px;
             width: 650px; /* Increased width */
+        }
+        #select-drawing-prompt p {
+            font-size: 14px;
+            margin-top: 5px;
         }
         #leaderboard-container {
             color: #00ffcc;
@@ -422,6 +427,10 @@
             height: 64px;
             cursor: pointer;
         }
+        .portfolio-item.selected img {
+            box-shadow: 0 0 15px #ffff00;
+            border-color: #ffff00;
+        }
         .portfolio-item img {
             width: 100%;
             height: 100%;
@@ -446,6 +455,9 @@
         }
         .portfolio-item:hover .download-icon {
             opacity: 1;
+        }
+        #portfolio-container.podium-selection-active .download-icon {
+            display: none;
         }
         .medal-icon {
             position: absolute;
@@ -493,6 +505,35 @@
             align-items: center;
             z-index: 102; /* Ensure it's above the game over screen */
         }
+        #top-frames-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 15px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        .frame-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        .frame-item img {
+            background: #222;
+            padding: 2px;
+        }
+        .frame-name {
+            font-size: 10px;
+            color: #fff;
+        }
+        .frame-score {
+            font-size: 8px;
+            color: #00ffcc;
+        }
+        #frame-img-1 { width: 70px; height: 70px; border: 1px solid #FFD700; box-shadow: 0 0 15px #FFD700; }
+        #frame-img-2 { width: 70px; height: 70px; border: 1px solid #C0C0C0; box-shadow: 0 0 10px #C0C0C0; }
+        #frame-img-3 { width: 70px; height: 70px; border: 1px solid #CD7F32; box-shadow: 0 0 10px #CD7F32; }
     </style>
 </head>
 <body>
@@ -538,14 +579,18 @@
         <div id="game-over-wrapper">
             <div id="message-box">
                 <div id="message-text">GAME OVER</div>
-                <div id="highscore-input-container" style="display: none;">
-                    <h3>Enter Your Initials:</h3>
-                    <input type="text" id="initials-input" maxlength="3" placeholder="AAA">
-                    <button id="submit-score-button">Submit</button>
+                <div id="select-drawing-prompt" style="display: none;">
+                    <h3>New Top 3 Score!</h3>
+                    <p>Select a drawing to represent you</p>
                 </div>
                 <div id="portfolio-container" style="display: none;">
                         <h3>Your Portfolio:</h3>
                         <div id="portfolio-images"></div>
+                </div>
+                <div id="highscore-input-container" style="display: none;">
+                    <h3>Enter Your Initials:</h3>
+                    <input type="text" id="initials-input" maxlength="3" placeholder="AAA" autocomplete="off">
+                    <button id="submit-score-button">Submit</button>
                 </div>
                 <button id="restart-button">Restart</button>
             </div>
@@ -557,10 +602,26 @@
         <div id="start-screen">
             <canvas id="start-screen-canvas"></canvas>
             <div id="start-screen-ui">
-                <div></div> <!-- Empty div for spacing -->
                 <div id="start-screen-leaderboard">
                     <h3>HI-SCORES</h3>
-                    <ol id="start-screen-list" class="leaderboard-ol"><li>Loading...</li></ol>
+                    <div id="top-frames-container">
+                        <div class="frame-item" id="frame-item-2">
+                            <img id="frame-img-2" src="">
+                            <div id="frame-name-2" class="frame-name">2. ---</div>
+                            <div id="frame-score-2" class="frame-score">0</div>
+                        </div>
+                        <div class="frame-item" id="frame-item-1">
+                            <img id="frame-img-1" src="">
+                            <div id="frame-name-1" class="frame-name">1. ---</div>
+                            <div id="frame-score-1" class="frame-score">0</div>
+                        </div>
+                        <div class="frame-item" id="frame-item-3">
+                            <img id="frame-img-3" src="">
+                            <div id="frame-name-3" class="frame-name">3. ---</div>
+                            <div id="frame-score-3" class="frame-score">0</div>
+                        </div>
+                    </div>
+                    <ol id="start-screen-list" class="leaderboard-ol"></ol>
                 </div>
                 <div id="start-prompt-area">
                     <div id="loading-container">
@@ -581,7 +642,7 @@
     // --- Firebase Imports ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, onSnapshot, collection, query, orderBy, limit, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, addDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     // --- Canvas and Context Setup ---
     const gameCanvas = document.getElementById('game-canvas');
@@ -640,18 +701,18 @@
     const windyMessageEl = document.getElementById('windy-message');
     const specialRequestMessageEl = document.getElementById('special-request-message');
     const trashIcon = document.getElementById('trash-icon');
+    const selectDrawingPrompt = document.getElementById('select-drawing-prompt');
 
     // --- Firebase Setup ---
     let db, auth, scoresCollectionRef;
-    const appId = 'designers-vs-ai-game';
-    const firebaseConfig = {
-      apiKey: "AIzaSyBglciCKGBvNki8z3Ln6RwRTw4JqGRpeiA",
-      authDomain: "designers-vs-ai-game.firebaseapp.com",
-      projectId: "designers-vs-ai-game",
-      storageBucket: "designers-vs-ai-game.appspot.com",
-      messagingSenderId: "503158591070",
-      appId: "1:503158591070:web:145b1e4eb8c63036726ecf"
-    };
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'designers-vs-ai-default';
+    let firebaseConfig;
+    try {
+        firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+    } catch (e) {
+        console.error("Could not parse Firebase config:", e);
+        firebaseConfig = null;
+    }
 
     let scoresLoadedResolve;
     const scoresLoadedPromise = new Promise(resolve => {
@@ -659,7 +720,7 @@
     });
 
     async function setupFirebase() {
-        if (!firebaseConfig.apiKey) {
+        if (!firebaseConfig || !firebaseConfig.apiKey) {
             console.log("Firebase config not found. High scores will be local.");
             startScreenListEl.innerHTML = '<li>Local Mode</li>';
             if (scoresLoadedResolve) {
@@ -673,37 +734,48 @@
             db = getFirestore(app);
             auth = getAuth(app);
             
-            await signInAnonymously(auth);
+            if (typeof __initial_auth_token !== 'undefined') {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
 
             scoresCollectionRef = collection(db, `artifacts/${appId}/public/data/scores`);
 
-            const q = query(scoresCollectionRef, orderBy("score", "desc"), limit(10));
-            onSnapshot(q, (querySnapshot) => {
-                startScreenListEl.innerHTML = ''; // Clear previous list
-                let scoreCount = 0;
-                if (!querySnapshot.empty) {
-                    const topDoc = querySnapshot.docs[0].data();
+            onSnapshot(scoresCollectionRef, (querySnapshot) => {
+                const scores = querySnapshot.docs.map(doc => doc.data());
+                scores.sort((a, b) => b.score - a.score);
+                const topTenScores = scores.slice(0, 10);
+
+                if (topTenScores.length > 0) {
+                    const topDoc = topTenScores[0];
                     topScore = topDoc.score;
                     topScoreName = topDoc.name;
-                    
-                    querySnapshot.forEach(doc => {
-                        const data = doc.data();
+                } else {
+                    topScore = 0;
+                    topScoreName = 'AI';
+                }
+                
+                updatePodium(topTenScores.slice(0, 3));
+                
+                startScreenListEl.innerHTML = '';
+                
+                let scoreCount = 0;
+                if(topTenScores.length > 0) {
+                    topTenScores.forEach(data => {
                         const li = document.createElement('li');
                         li.textContent = `${data.name}: ${data.score}`;
                         startScreenListEl.appendChild(li);
                         scoreCount++;
                     });
-                } else {
-                    topScore = 0;
-                    topScoreName = 'AI';
                 }
-
-                // Pad the list to always show 10 scores
+                
                 for (let i = scoreCount; i < 10; i++) {
                     const li = document.createElement('li');
                     li.textContent = `DVA: 0`;
                     startScreenListEl.appendChild(li);
                 }
+
 
                 updateUI();
                 if (scoresLoadedResolve) {
@@ -753,12 +825,12 @@
         url: "https://raw.githubusercontent.com/BenDiva/designers-vs-ai/main/assets/background-music.mp3",
         loop: true,
     }).toDestination();
-    backgroundMusicPlayer.volume.value = -6; // Made it a bit louder
+    backgroundMusicPlayer.volume.value = -6;
 
     const gameOverMusicPlayer = new Tone.Player({
         url: "https://raw.githubusercontent.com/BenDiva/designers-vs-ai/main/assets/game-over-music.mp3",
     }).toDestination();
-    gameOverMusicPlayer.volume.value = 0; // Made it a bit louder
+    gameOverMusicPlayer.volume.value = 0;
 
 
     sound.rain.volume.value = -25;
@@ -779,7 +851,6 @@
     let hasShownFirstRestockMessage = false;
     let hasShownSpecialRequestMessage = false;
     let hasShownLukewarmMessage = false;
-    let lastSubmittedScoreTimestamp = null;
     let totalClientsSpawned = 0;
     let windStrength = 0;
     let successfulDeliveries = 0;
@@ -792,9 +863,15 @@
     let isPopupActive = false;
     let popupQueue = [];
     let isGameLoaded = false;
+    let selectedPortfolioImage = null;
+    let scoreSubmitted = false;
+    let newlySubmittedScoreTimestamp = null;
+    let lastPointTime = 0;
+    let lastLineWidth = 3;
 
-    const inkColors = ['#00ffff', '#20c2a8', '#ff00ff', '#ffc300', '#ff7f50', '#0000ff', '#00ff00']; // Updated yellow
-    const pencilColors = { // Map pencil elements to main color array indices
+
+    const inkColors = ['#00ffff', '#20c2a8', '#ff00ff', '#ffc300', '#ff7f50', '#0000ff', '#00ff00'];
+    const pencilColors = {
         'pencil-cyan': 0,
         'pencil-magenta': 2,
         'pencil-yellow': 3
@@ -862,10 +939,10 @@
     const clothingTones = ['#8B4513', '#654321', '#5a3d2b', '#3d2b1f', '#2b1d0e'];
 
     const DESIGNER_WIDTH = 50, DESIGNER_HEIGHT = 60;
-    const CLIENT_WIDTH = 44, CLIENT_HEIGHT = 77; // 10% bigger
+    const CLIENT_WIDTH = 44, CLIENT_HEIGHT = 77;
     const AI_WIDTH = 80, AI_HEIGHT = 155;
     const PROJECTILE_SPEED = 7, BUILDING_HEIGHT = 150;
-    const MS_PER_FRAME = 16.67; // Approx ms for 60fps
+    const MS_PER_FRAME = 16.67;
     const windowHeight = 80;
     const topMargin = 50; 
     
@@ -880,16 +957,14 @@
         const allVoices = synth.getVoices();
         maleVoices = allVoices.filter(voice => voice.name.includes('Male') || voice.gender === 'male');
         femaleVoices = allVoices.filter(voice => voice.name.includes('Female') || voice.gender === 'female');
-        // Fallback if no gendered voices are found
         if (maleVoices.length === 0) maleVoices = allVoices.filter(voice => voice.lang.startsWith('en-'));
         if (femaleVoices.length === 0) femaleVoices = allVoices.reverse().filter(voice => voice.lang.startsWith('en-'));
     }
 
-    // This is needed because getVoices() is often async
     if (synth.onvoiceschanged !== undefined) {
         synth.onvoiceschanged = loadVoices;
     }
-    loadVoices(); // Initial attempt
+    loadVoices();
 
     function processSpeechQueue() {
         if (isGameOver || synth.speaking || speechQueue.length === 0 || Tone.Master.mute) {
@@ -897,7 +972,7 @@
         }
         const utterance = speechQueue.shift();
         utterance.onend = () => {
-            setTimeout(processSpeechQueue, 100); // Small delay between speeches
+            setTimeout(processSpeechQueue, 100);
         };
         synth.speak(utterance);
     }
@@ -1009,17 +1084,15 @@
             this.skinColor = skinTones[Math.floor(Math.random() * skinTones.length)];
             this.clothingColor = clothingTones[Math.floor(Math.random() * clothingTones.length)];
 
-            // Assign voice
             if (clientVoiceCounter % 2 === 0 && femaleVoices.length > 0) {
                 this.voice = femaleVoices[Math.floor(Math.random() * femaleVoices.length)];
             } else if (maleVoices.length > 0) {
                 this.voice = maleVoices[Math.floor(Math.random() * maleVoices.length)];
             } else {
-                this.voice = null; // Default voice
+                this.voice = null;
             }
             clientVoiceCounter++;
             
-            // Investigation behavior properties
             this.investigationQuoteVisible = false;
             this.quoteTimer = 0;
             this.nextQuoteTime = 0;
@@ -1027,9 +1100,13 @@
             this.moveTimer = 0;
 
             if (totalClientsSpawned === 3 || (totalClientsSpawned > 3 && totalClientsSpawned % 3 === 0)) {
+                let availableRequests = specialRequestTypes;
+                if (totalClientsSpawned < 10) {
+                    availableRequests = specialRequestTypes.filter(req => req.type !== 'impossible');
+                }
                 let newRequest;
                 do {
-                    newRequest = specialRequestTypes[Math.floor(Math.random() * specialRequestTypes.length)];
+                    newRequest = availableRequests[Math.floor(Math.random() * availableRequests.length)];
                 } while (newRequest.type === lastSpecialRequestType);
                 this.specialRequest = newRequest;
                 lastSpecialRequestType = this.specialRequest.type;
@@ -1048,36 +1125,33 @@
         
         update(time) {
             if (this.isInvestigating) {
-                // Handle investigation behavior
                 this.quoteTimer -= MS_PER_FRAME;
                 if (this.quoteTimer <= 0 && this.investigationQuoteVisible) {
                     this.investigationQuoteVisible = false;
-                    this.nextQuoteTime = (5000 + Math.random() * 5000); // 5-10 seconds
+                    this.nextQuoteTime = (5000 + Math.random() * 5000);
                 }
 
                 this.nextQuoteTime -= MS_PER_FRAME;
                 if (this.nextQuoteTime <= 0 && !this.investigationQuoteVisible) {
                     this.investigationQuoteVisible = true;
                     this.quote = investigationQuotes[Math.floor(Math.random() * investigationQuotes.length)];
-                    this.quoteTimer = 3000; // Show for 3 seconds
+                    this.quoteTimer = 3000;
                 }
 
                 this.moveTimer -= MS_PER_FRAME;
                 if (this.moveTimer <= 0) {
-                    // New target is in a zone in front of the AI server
                     const wanderZoneStart = ai.x - this.width / 2;
                     const wanderZoneWidth = ai.width;
                     this.targetX = wanderZoneStart + Math.random() * wanderZoneWidth;
-                    this.moveTimer = 1000 + Math.random() * 2000; // New target every 1-3 seconds
+                    this.moveTimer = 1000 + Math.random() * 2000;
                 }
                 
-                // Move towards target
                 const dx = this.targetX - this.x;
                 if (Math.abs(dx) > 1) {
-                    this.x += Math.sign(dx) * 0.5; // Slow walk
+                    this.x += Math.sign(dx) * 0.5;
                 }
                 
-                this.walkBob = Math.sin(time / 250) * 1.5; // Slower bob
+                this.walkBob = Math.sin(time / 250) * 1.5;
                 return;
             }
 
@@ -1095,7 +1169,6 @@
                 return;
             }
 
-            // Normal movement
             if (this.isCaught) { this.x -= this.speed * 2; } 
             else if (this.isAngry) { this.x += this.speed * 2.5; } 
             else { this.x += this.speed; }
@@ -1107,16 +1180,15 @@
         draw() {
             const clientX = this.x; const clientY = this.y + this.walkBob;
             
-            // --- ADD SHADOW ---
             internalCtx.save();
             internalCtx.fillStyle = 'rgba(0, 4, 28, 0.4)';
             internalCtx.shadowColor = '#00041c';
             internalCtx.shadowBlur = 15;
             internalCtx.beginPath();
             const shadowBaseY = clientY + this.height;
-            const shadowTipY = INTERNAL_HEIGHT + 50; // Go off screen
-            const shadowBaseWidth = this.width * 0.9; // Made wider
-            const shadowTipWidth = this.width * 1.8; // Made wider
+            const shadowTipY = INTERNAL_HEIGHT + 50;
+            const shadowBaseWidth = this.width * 0.9;
+            const shadowTipWidth = this.width * 1.8;
 
             internalCtx.moveTo(clientX + (this.width - shadowBaseWidth) / 2, shadowBaseY);
             internalCtx.lineTo(clientX + (this.width - shadowTipWidth) / 2, shadowTipY);
@@ -1126,7 +1198,6 @@
             internalCtx.fill();
             internalCtx.restore();
 
-            // --- DRAW THE BASE CLIENT (FULLY OPAQUE) ---
             internalCtx.fillStyle = this.clothingColor;
             internalCtx.beginPath();
             internalCtx.moveTo(clientX, clientY + this.height);
@@ -1156,8 +1227,6 @@
                 internalCtx.fillRect(clientX + 8, clientY - 8, this.width - 16, 8);
             }
 
-
-            // --- SUBTLE LIGHTING AND TINTING ---
             const NEON_SIGN_X = INTERNAL_WIDTH * 0.55;
             const NEON_SIGN_WIDTH = 300;
             const clientCenterX = clientX + this.width / 2;
@@ -1172,7 +1241,6 @@
             const brightness = 0.6 + (0.4 * lightIntensity);
             internalCtx.fillStyle = `rgba(${redTint}, 0, ${blueTint}, ${1 - brightness})`;
             
-            // Re-draw the client's shape to apply the tint perfectly, avoiding a "blocky" overlay
             internalCtx.beginPath();
             internalCtx.moveTo(clientX, clientY + this.height);
             internalCtx.lineTo(clientX + 5, clientY + 15);
@@ -1198,10 +1266,8 @@
                 internalCtx.fillRect(clientX + 8, clientY - 8, this.width - 16, 8);
             }
 
-
             internalCtx.globalCompositeOperation = 'source-over';
             
-            // --- DRAW TEXT QUOTES ---
             const textYPosition = this.y - 15;
             const textMaxWidth = 140;
 
@@ -1235,7 +1301,6 @@
                 const paperY = this.y + 15;
                 internalCtx.drawImage(this.caughtDesignImage, paperX, paperY, 40, 40);
 
-                // Apply lighting to the caught paper
                 const paperCenterX = paperX + 20;
                 const paperDistanceToSign = Math.abs(paperCenterX - signCenterX);
                 const paperLightIntensity = Math.max(0, 1 - (paperDistanceToSign / lightFalloff));
@@ -1259,8 +1324,8 @@
         }
         update() { 
             this.y += this.speed;
-            this.x += windStrength * 2; // Apply wind effect
-            this.rotation = Math.atan2(windStrength * 2, this.speed); // Calculate tilt based on velocity
+            this.x += windStrength * 2;
+            this.rotation = Math.atan2(windStrength * 2, this.speed);
         }
         draw() { 
             internalCtx.save();
@@ -1268,7 +1333,6 @@
             internalCtx.rotate(this.rotation);
             internalCtx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
 
-            // Apply the same subtle lighting as clients
             const NEON_SIGN_X = INTERNAL_WIDTH * 0.55;
             const NEON_SIGN_WIDTH = 300;
             const projectileCenterX = this.x + this.width / 2;
@@ -1320,7 +1384,6 @@
             });
         }
         draw() {
-            // Draw blinking lights
             this.blinkingLights.forEach(light => {
                 if (light.isOn) {
                     internalCtx.fillStyle = light.color;
@@ -1330,37 +1393,31 @@
                 }
             });
 
-            // Draw breach indicator lights
             for (let i = 0; i < 3; i++) {
                 const lightX = this.x + (this.width / 4) * (i + 1);
                 const lightY = this.y - 30;
                 const radius = 8;
                 if (i < this.breaches) {
-                    // This light is ON
-                  // This light is ON
-internalCtx.save();
-internalCtx.globalCompositeOperation = 'linear-dodge';
-internalCtx.fillStyle = 'rgba(255, 0, 0, 0.4)';
-internalCtx.shadowColor = '#ff0000';
-internalCtx.shadowBlur = 25;
-internalCtx.beginPath();
-internalCtx.arc(lightX, lightY, radius, 0, Math.PI * 2);
-internalCtx.fill();
+                    internalCtx.save();
+                    internalCtx.globalCompositeOperation = 'linear-dodge';
+                    internalCtx.fillStyle = 'rgba(255, 0, 0, 0.4)';
+                    internalCtx.shadowColor = '#ff0000';
+                    internalCtx.shadowBlur = 25;
+                    internalCtx.beginPath();
+                    internalCtx.arc(lightX, lightY, radius, 0, Math.PI * 2);
+                    internalCtx.fill();
 
-// --- NEW CODE FOR THE INNER WHITE GLOW ---
-const gradient = internalCtx.createRadialGradient(lightX, lightY, 0, lightX, lightY, radius / 2);
-gradient.addColorStop(0, 'rgba(255, 255, 255, 1)'); // Bright center
-gradient.addColorStop(1, 'rgba(255, 200, 200, 0.0)');   // Fades to transparent
+                    const gradient = internalCtx.createRadialGradient(lightX, lightY, 0, lightX, lightY, radius / 2);
+                    gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+                    gradient.addColorStop(1, 'rgba(255, 200, 200, 0.0)');
 
-internalCtx.fillStyle = gradient;
-internalCtx.beginPath();
-internalCtx.arc(lightX, lightY, radius / 0.1, 0, Math.PI * 2);
-internalCtx.fill();
-// --- END OF NEW CODE ---
+                    internalCtx.fillStyle = gradient;
+                    internalCtx.beginPath();
+                    internalCtx.arc(lightX, lightY, radius / 0.1, 0, Math.PI * 2);
+                    internalCtx.fill();
 
-internalCtx.restore();
+                    internalCtx.restore();
                 }
-                // If the light is 'off', do nothing to make it invisible.
             }
         }
     }
@@ -1388,6 +1445,8 @@ internalCtx.restore();
         speechQueue = [];
         synth.cancel();
         rareQuoteUsed = false;
+        selectedPortfolioImage = null;
+        scoreSubmitted = false;
         
         gameOverMusicPlayer.stop();
         backgroundMusicPlayer.volume.value = -10;
@@ -1398,23 +1457,22 @@ internalCtx.restore();
         }
        
         resizeCanvas();
-        designer = new Designer(INTERNAL_WIDTH / 1.9 - DESIGNER_WIDTH / 2, BUILDING_HEIGHT - DESIGNER_HEIGHT - 22); // Moved down 3px
-        ai = new AI(INTERNAL_WIDTH - AI_WIDTH - 20, INTERNAL_HEIGHT - AI_HEIGHT - 14); // Match client baseline
+        designer = new Designer(INTERNAL_WIDTH / 1.9 - DESIGNER_WIDTH / 2, BUILDING_HEIGHT - DESIGNER_HEIGHT - 22);
+        ai = new AI(INTERNAL_WIDTH - AI_WIDTH - 20, INTERNAL_HEIGHT - AI_HEIGHT - 14);
         
-        const windowWidth = 76; // Decreased width
-        const windowSpacing = 14; // Increased spacing
+        const windowWidth = 76;
+        const windowSpacing = 14;
         const windowOffsets = [0, 0, 0, 5, 6, 7, 8, 10, 11, 9, 10, 11, 12, 13];
 
-        windows = []; // Clear existing windows before recalculating
-        for (let i = 0, x = windowSpacing - 3; x < INTERNAL_WIDTH; x += windowWidth + windowSpacing, i++) { // Start 3px to the left
+        windows = [];
+        for (let i = 0, x = windowSpacing - 3; x < INTERNAL_WIDTH; x += windowWidth + windowSpacing, i++) {
              windows.push({ 
                 x, y: topMargin, width: windowWidth, height: windowHeight, 
                 openState: 0, 
-                isUsable: i >= 1, // Only the first window is not usable
+                isUsable: i >= 1,
                 xOffset: windowOffsets[i] || 0
             });
         }
-
 
         for (let i = 0; i < 200; i++) {
             raindrops.push({
@@ -1424,10 +1482,13 @@ internalCtx.restore();
         }
         
         updateUI();
-        selectPencil(document.getElementById('pencil-cyan')); // Default selection
+        selectPencil(document.getElementById('pencil-cyan'));
         clearDrawing();
         updatePaperStackUI();
+        
         gameOverWrapper.style.display = 'none';
+        leaderboardContainer.style.display = 'none';
+        leaderboardList.innerHTML = '';
         highscoreInputContainer.style.display = 'none';
         restartButton.style.display = 'block';
 
@@ -1439,7 +1500,7 @@ internalCtx.restore();
     }
 
     function manageClients(time) {
-        if (isGameOver) return; // Prevent new clients after game over
+        if (isGameOver) return;
         const activeClients = clients.filter(c => !c.isCaught && !c.isInvestigating).length;
         
         const spawnRate = Math.max(800, 3000 - totalClientsSpawned * 60);
@@ -1450,25 +1511,25 @@ internalCtx.restore();
         if (time - lastSpawnTime > randomSpawnDelay && activeClients < maxClients) {
             totalClientsSpawned++;
             if (totalClientsSpawned === 3 && !hasShownSpecialRequestMessage) {
-                queuePopup(specialRequestMessageEl, 4000, true); // Prioritize this popup
+                queuePopup(specialRequestMessageEl, 4000, true);
                 hasShownSpecialRequestMessage = true;
             }
             const clientSpeed = 1.4 + totalClientsSpawned / 30;
-            clients.push(new Client(INTERNAL_HEIGHT - CLIENT_HEIGHT - 14, clientSpeed)); // Moved up 4px
+            clients.push(new Client(INTERNAL_HEIGHT - CLIENT_HEIGHT - 14, clientSpeed));
             lastSpawnTime = time;
         }
     }
 
     function manageSwarm(time) {
-        if (time - lastSpawnTime > 200) { // Spawn swarm clients faster
-            const swarmClient = new Client(INTERNAL_HEIGHT - CLIENT_HEIGHT - 14, 1.5 + Math.random()); // Moved up 4px
+        if (time - lastSpawnTime > 200) {
+            const swarmClient = new Client(INTERNAL_HEIGHT - CLIENT_HEIGHT - 14, 1.5 + Math.random());
             swarmClient.x = -swarmClient.width - Math.random() * 200;
             swarmClient.isSwarming = true;
             clients.push(swarmClient);
             lastSpawnTime = time;
         }
         if (clients.length > 15) {
-            clients.shift(); // Remove the oldest client to maintain performance
+            clients.shift();
         }
     }
 
@@ -1483,13 +1544,12 @@ internalCtx.restore();
 
     // --- Update Logic ---
     function update(time) {
-        // Update wind strength based on successful deliveries
         if (windStartTime !== null) {
             const timeSinceWindStart = time - windStartTime;
-            const maxWind = Math.min(1.0, timeSinceWindStart / 90000); // Ramps up to max over 90 seconds from when it starts
-            windStrength = Math.sin(timeSinceWindStart / 8000) * maxWind; // Oscillates
+            const maxWind = Math.min(1.0, timeSinceWindStart / 90000);
+            windStrength = Math.sin(timeSinceWindStart / 8000) * maxWind;
         } else {
-            windStrength = 0; // No wind before the trigger
+            windStrength = 0;
         }
 
         if (!isGameOver) {
@@ -1503,7 +1563,7 @@ internalCtx.restore();
         ai.update();
         
         windows.forEach(win => {
-            if (!win.isUsable) return; // Skip non-usable windows
+            if (!win.isUsable) return;
             const designerMidX = designer.x + designer.width / 2;
             const isBehind = designerMidX > win.x && designerMidX < win.x + win.width;
             if (isBehind && win.openState < 1) win.openState += 0.1;
@@ -1535,14 +1595,14 @@ internalCtx.restore();
         projectiles.forEach((p, index) => {
             p.update();
             if (p.y > INTERNAL_HEIGHT) {
-                if (p.isBlank) { // Penalty for dropping a blank page
+                if (p.isBlank) {
                     score--;
                     vfxParticles.push({
                         x: p.x + p.width / 2, y: INTERNAL_HEIGHT - 50,
                         vy: -1, vx: 0,
                         alpha: 1, life: 60, text: '-1', color: '#ff4141'
                     });
-                } else { // Penalty for any other missed page
+                } else {
                      score--;
                      vfxParticles.push({
                         x: p.x + p.width / 2, y: INTERNAL_HEIGHT - 50,
@@ -1557,7 +1617,7 @@ internalCtx.restore();
         
         raindrops.forEach(r => {
             r.y += r.speed;
-            r.x += windStrength * (r.speed / 2); // Rain drifts with the wind
+            r.x += windStrength * (r.speed / 2);
             if (r.y > INTERNAL_HEIGHT) { 
                 r.y = -r.length; 
                 r.x = Math.random() * INTERNAL_WIDTH; 
@@ -1570,17 +1630,16 @@ internalCtx.restore();
     function checkCollisions(time) {
         clients.forEach(client => {
             if (isGameOver || client.isCaught || client.hasReachedAI) {
-                return; // Skip clients that are already handled
+                return;
             }
 
-            // Check for projectile collision only if client is not angry
             if (!client.isAngry) {
                 projectiles.forEach((p, pIndex) => {
                     if (p.x < client.x + client.width && p.x + p.width > client.x &&
                         p.y < client.y + client.height && p.y + p.height > client.y) {
                         
                         const handleNegativeOutcome = () => {
-                            client.isCaught = false; // Important: this allows the angry state to take over
+                            client.isCaught = false;
                             client.isAngry = true;
                             client.feedbackQuote = negativeQuotes[Math.floor(Math.random() * negativeQuotes.length)];
                             if(sound.isStarted) sound.fail.triggerAttackRelease("A2", "8n");
@@ -1607,7 +1666,7 @@ internalCtx.restore();
                                 if (client.specialRequest.type === 'impossible') {
                                     points = 0;
                                     client.feedbackQuote = "It's just not Horizon enough.";
-                                    client.feedbackType = 'lukewarm'; // This makes them walk away peacefully
+                                    client.feedbackType = 'lukewarm';
                                     if(sound.isStarted) sound.success5pt.triggerAttackRelease("C5", "16n");
                                     speak(client.feedbackQuote, 0.9, 1.0, client.voice, true);
                                 } else if (analyzeDesign(p.designData, client.specialRequest)) {
@@ -1619,7 +1678,7 @@ internalCtx.restore();
                                     speak(client.feedbackQuote, 1.2, 1.4, client.voice, true);
                                 } else {
                                     handleNegativeOutcome();
-                                    projectiles.splice(pIndex, 1); // Remove projectile and exit early
+                                    projectiles.splice(pIndex, 1);
                                     return;
                                 }
                             } else {
@@ -1650,16 +1709,16 @@ internalCtx.restore();
                                     }
                                 }
 
-                                if (!client.feedbackQuote) { // If not already set by color streak
+                                if (!client.feedbackQuote) {
                                     if (points === 5) {
                                         client.feedbackQuote = minimalReactionQuotes[Math.floor(Math.random() * minimalReactionQuotes.length)];
                                         client.feedbackType = 'lukewarm';
                                         if(sound.isStarted) sound.success5pt.triggerAttackRelease("C5", "16n");
                                         speak(client.feedbackQuote, 0.9, 1.0, client.voice, true);
-                                    } else { // points are 10 or 15
+                                    } else {
                                         let availablePositiveQuotes = [...positiveQuotes];
                                         const rareQuote = "The worst thing I've ever seen. Approved.";
-                                        if (!rareQuoteUsed && Math.random() < 0.1) { // 10% chance
+                                        if (!rareQuoteUsed && Math.random() < 0.1) {
                                             client.feedbackQuote = rareQuote;
                                             rareQuoteUsed = true;
                                         } else {
@@ -1673,7 +1732,6 @@ internalCtx.restore();
                                 }
                             }
                             
-                            // Handle lukewarm tutorial popup
                             if (points === 5 && !hasShownLukewarmMessage) {
                                 hasShownLukewarmMessage = true;
                                 queuePopup(lukewarmMessageEl, 4000);
@@ -1685,7 +1743,7 @@ internalCtx.restore();
                                 vy: -1, vx: 0,
                                 alpha: 1, life: 60, text: `+${points}`, color: '#00ff00'
                             });
-                            successfulDesigns.push({ src: p.image.src, wasSpecial: fulfilledSpecial });
+                            successfulDesigns.push({ src: p.image.src, wasSpecial: fulfilledSpecial, designData: p.designData });
 
                             successfulDeliveries++;
                             
@@ -1700,9 +1758,7 @@ internalCtx.restore();
                 });
             }
 
-            // Check for reaching the AI server
             if (client.x + client.width >= ai.x) {
-                // Penalty for special request clients reaching AI (if they weren't already angry)
                 if (client.specialRequest && client.specialRequest.type !== 'impossible' && !client.isAngry) {
                     score -= 10;
                      vfxParticles.push({
@@ -1715,13 +1771,11 @@ internalCtx.restore();
 
                 client.hasReachedAI = true;
                 client.isInvestigating = true;
-                client.isAngry = false; // Stop being angry
+                client.isAngry = false;
                 
-                // Initialize investigation state
-                client.quoteTimer = 3000; // Show first quote for 3s
+                client.quoteTimer = 3000;
                 client.investigationQuoteVisible = true;
                 client.quote = investigationQuotes[Math.floor(Math.random() * investigationQuotes.length)];
-                // No speech for investigation
                 
                 ai.breaches++;
                 if(sound.isStarted && ai.breaches < 3) sound.breach.triggerAttackRelease("A2", "8n");
@@ -1738,7 +1792,6 @@ internalCtx.restore();
         if (backgroundImage.complete && backgroundImage.naturalHeight !== 0) {
             internalCtx.drawImage(backgroundImage, 0, 0, INTERNAL_WIDTH, INTERNAL_HEIGHT);
         } else {
-            // Fallback to original procedural background if image fails to load
             const gradient = internalCtx.createLinearGradient(0, 0, 0, INTERNAL_HEIGHT);
             gradient.addColorStop(0, '#0c0a18');
             gradient.addColorStop(1, '#2c244d');
@@ -1759,7 +1812,6 @@ internalCtx.restore();
     }
 
     function drawWindowsAndDesigner() {
-        // Draw the restock paper stack in the first window
         const firstWindow = windows[0];
         if (firstWindow) {
             internalCtx.fillStyle = '#fff';
@@ -1774,48 +1826,43 @@ internalCtx.restore();
             internalCtx.rect(win.x, win.y, win.width, win.height);
             internalCtx.clip();
 
-            // Interior Glow (behind designer)
             if (win.openState > 0) {
-                internalCtx.globalCompositeOperation = 'lighter'; // 'add' blend mode
+                internalCtx.globalCompositeOperation = 'lighter';
                 const glowPulse = (Math.sin(gameTime / 400 + win.x / 100) + 1) / 2;
-                const glowAlpha = glowPulse * 0.7 * win.openState; // Glow fades with window, MORE OBVIOUS
+                const glowAlpha = glowPulse * 0.7 * win.openState;
                 const grad = internalCtx.createRadialGradient(win.x + win.width / 2, win.y + win.height / 2, 0, win.x + win.width / 2, win.y + win.height / 2, win.width * 0.7);
                 grad.addColorStop(0, `rgba(255, 255, 255, ${glowAlpha})`);
                 grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
                 internalCtx.fillStyle = grad;
                 internalCtx.fillRect(win.x, win.y, win.width, win.height);
-                internalCtx.globalCompositeOperation = 'source-over'; // reset
+                internalCtx.globalCompositeOperation = 'source-over';
             }
             
-            designer.draw(win.openState < 1); // Draw designer (silhouetted if window is closing)
-            drawPaperVFX(); // Draw paper particles inside the clipped window area
+            designer.draw(win.openState < 1);
+            drawPaperVFX();
             internalCtx.restore();
 
-            // Sliding shutter part
             const slideY = win.y - (win.height * win.openState);
-            internalCtx.fillStyle = 'rgba(0, 7, 27, 0.7)'; // Semi-transparent dark blue shutter
-            // Draw a tall rectangle that starts from off-screen to ensure it always covers the top
+            internalCtx.fillStyle = 'rgba(0, 7, 27, 0.7)';
             internalCtx.fillRect(win.x, slideY - win.y, win.width, win.height + win.y);
         });
     }
 
-function drawFramesAndDetails() {
-    internalCtx.strokeStyle = '#04010d';
-    internalCtx.lineWidth = 9;
-    internalCtx.lineCap = 'butt';
+    function drawFramesAndDetails() {
+        internalCtx.strokeStyle = '#04010d';
+        internalCtx.lineWidth = 9;
+        internalCtx.lineCap = 'butt';
 
-    // Draw a single top border across the entire canvas width
-    internalCtx.beginPath();
-    internalCtx.moveTo(0, topMargin);
-    internalCtx.lineTo(INTERNAL_WIDTH, topMargin);
-    internalCtx.stroke();
+        internalCtx.beginPath();
+        internalCtx.moveTo(0, topMargin);
+        internalCtx.lineTo(INTERNAL_WIDTH, topMargin);
+        internalCtx.stroke();
 
-    // Draw a single bottom border across the entire canvas width
-    internalCtx.beginPath();
-    internalCtx.moveTo(0, topMargin + windowHeight);
-    internalCtx.lineTo(INTERNAL_WIDTH, topMargin + windowHeight);
-    internalCtx.stroke();
-}
+        internalCtx.beginPath();
+        internalCtx.moveTo(0, topMargin + windowHeight);
+        internalCtx.lineTo(INTERNAL_WIDTH, topMargin + windowHeight);
+        internalCtx.stroke();
+    }
     
     function drawScoreVFX() {
         vfxParticles.forEach(p => {
@@ -1842,7 +1889,6 @@ function drawFramesAndDetails() {
     }
 
     function draw() {
-        // Draw all game elements to the internal canvas
         drawBackground();
         drawWindowsAndDesigner();
         drawFramesAndDetails();
@@ -1852,7 +1898,6 @@ function drawFramesAndDetails() {
         drawScoreVFX();
         drawRain();
 
-        // Scale the internal canvas to fit the display canvas
         gameCtx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
         gameCtx.drawImage(internalCanvas, 0, 0, gameCanvas.width, gameCanvas.height);
     }
@@ -1864,7 +1909,6 @@ function drawFramesAndDetails() {
             return;
         }
 
-        // Hide initial tutorials if they are still visible
         instructionMessageEl.style.display = 'none';
         drawHereMessageEl.style.display = 'none';
 
@@ -1875,23 +1919,26 @@ function drawFramesAndDetails() {
         setTimeout(() => {
             element.style.display = 'none';
             isPopupActive = false;
-            processPopupQueue(); // Check for the next popup in the queue
+            processPopupQueue();
         }, duration);
     }
 
     function queuePopup(element, duration, isPriority = false) {
         const item = { element, duration };
         if (isPriority) {
-            popupQueue.unshift(item); // Add to the front of the queue
+            popupQueue.unshift(item);
         } else {
-            popupQueue.push(item); // Add to the back of the queue
+            popupQueue.push(item);
         }
         processPopupQueue();
     }
 
     function updateUI() { 
         scoreEl.textContent = `Score: ${score}`; 
-        topScoreEl.textContent = `HI-SCORE: ${topScore} ${topScoreName}`;
+        const highlightedTopScore = document.querySelector('.leaderboard-ol li.highlight');
+        if (!highlightedTopScore) {
+             topScoreEl.textContent = `HI-SCORE: ${topScore} ${topScoreName}`;
+        }
     }
 
     function selectPencil(pencilElement) {
@@ -1911,10 +1958,9 @@ function drawFramesAndDetails() {
     }
     
     function gameOver() {
-        if (isGameOver) return; // Prevent multiple calls
+        if (isGameOver) return;
         isGameOver = true;
         
-        // Stop all sounds except the main music (for now)
         Object.values(sound).forEach(sfx => {
             if (sfx && typeof sfx.triggerRelease === 'function') {
                 sfx.triggerRelease();
@@ -1934,29 +1980,54 @@ function drawFramesAndDetails() {
         instructionMessageEl.style.display = 'none';
         drawHereMessageEl.style.display = 'none';
 
-        // Clear projectiles and non-investigating clients
         projectiles = [];
         clients = clients.filter(c => c.isInvestigating);
     }
 
     async function showGameOverScreen() {
-        messageTextEl.innerHTML = "GAME OVER<br>THE CLIENTS HAVE FIGURED OUT AI";
-        portfolioContainer.style.display = 'none'; // Hide portfolio initially
-        if (score > 0) { // Only submit scores greater than 0
-            highscoreInputContainer.style.display = 'block';
-            restartButton.style.display = 'none';
-        } else {
-            highscoreInputContainer.style.display = 'none';
-            restartButton.style.display = 'block';
-            portfolioContainer.style.display = 'flex';
-            await showLeaderboard(leaderboardList, null);
+        let topScores = [];
+        if (scoresCollectionRef) {
+            const scoresSnapshot = await getDocs(scoresCollectionRef);
+            topScores = scoresSnapshot.docs.map(doc => doc.data().score);
+            topScores.sort((a, b) => b - a);
+        }
+        
+        const isTopThree = score > 0 && (topScores.length < 3 || score > topScores[2]);
+        const isTopTen = score > 0 && (topScores.length < 10 || score > topScores[9]);
+
+        const savedInitials = localStorage.getItem('designersVsAiInitials');
+        if (savedInitials) {
+            initialsInput.value = savedInitials;
         }
 
         portfolioImagesContainer.innerHTML = '';
+
+        if (isTopThree && successfulDesigns.length > 0) {
+            selectedPortfolioImage = successfulDesigns[0].src;
+            portfolioContainer.classList.add('podium-selection-active');
+        } else {
+            portfolioContainer.classList.remove('podium-selection-active');
+        }
+
+        let isFirstItem = true;
         successfulDesigns.forEach(design => {
             const div = document.createElement('div');
             div.className = 'portfolio-item';
-            div.onclick = () => downloadPortfolioItem(design.src);
+
+            if (isTopThree && isFirstItem) {
+                div.classList.add('selected');
+                isFirstItem = false;
+            }
+            
+            div.onclick = () => {
+                if (!scoreSubmitted && isTopThree) {
+                    document.querySelectorAll('.portfolio-item').forEach(el => el.classList.remove('selected'));
+                    div.classList.add('selected');
+                    selectedPortfolioImage = design.src;
+                } else {
+                    downloadPortfolioItem(design.src);
+                }
+            };
 
             const img = document.createElement('img');
             img.src = design.src;
@@ -1978,6 +2049,29 @@ function drawFramesAndDetails() {
 
             portfolioImagesContainer.appendChild(div);
         });
+
+        if (isTopThree) {
+            messageTextEl.innerHTML = "GAME OVER! THE CLIENTS DISCOVERED AI";
+            selectDrawingPrompt.style.display = 'block';
+            portfolioContainer.style.display = 'flex';
+            highscoreInputContainer.style.display = 'block';
+            restartButton.style.display = 'none';
+        } else if (isTopTen) {
+            messageTextEl.innerHTML = "GAME OVER!<br>NEW HIGH SCORE!";
+            selectDrawingPrompt.style.display = 'none';
+            portfolioContainer.style.display = 'flex';
+            portfolioContainer.classList.remove('podium-selection-active');
+            highscoreInputContainer.style.display = 'block';
+            restartButton.style.display = 'none';
+            selectedPortfolioImage = null;
+        } else {
+            messageTextEl.innerHTML = "GAME OVER<br>THE CLIENTS HAVE FIGURED OUT AI";
+            highscoreInputContainer.style.display = 'none';
+            restartButton.style.display = 'block';
+            portfolioContainer.style.display = 'flex';
+            selectDrawingPrompt.style.display = 'none';
+            await showLeaderboard(leaderboardList);
+        }
         
         gameOverWrapper.style.display = 'flex';
     }
@@ -1986,9 +2080,12 @@ function drawFramesAndDetails() {
         drawingCtx.fillStyle = '#f0f0f0';
         drawingCtx.fillRect(0, 0, drawingCanvas.width, drawingCanvas.height);
         drawingCtx.strokeStyle = inkColors[currentInkColorIndex];
-        drawingCtx.lineWidth = 3;
         drawingCtx.lineCap = 'round';
         drawingCtx.lineJoin = 'round';
+        // Ensure no effects are active that could alter pixel colors
+        drawingCtx.shadowColor = 'transparent';
+        drawingCtx.shadowBlur = 0;
+        drawingCtx.globalCompositeOperation = 'source-over';
         usedColorsInCurrentDrawing.clear();
     }
     
@@ -2003,7 +2100,6 @@ function drawFramesAndDetails() {
         let line = '';
         const lines = [];
 
-        // 1. Split text into an array of lines
         for(let n = 0; n < words.length; n++) {
             const testLine = line + words[n] + ' ';
             const metrics = context.measureText(testLine);
@@ -2017,13 +2113,10 @@ function drawFramesAndDetails() {
         }
         lines.push(line.trim());
 
-        // 2. 'y' is the desired vertical position for the BOTTOM of the entire text block.
         const totalTextHeight = lines.length * lineHeight;
         const topOfTextBlock = y - totalTextHeight;
 
-        // 3. Draw the lines, starting from the calculated top position.
         for (let i = 0; i < lines.length; i++) {
-            // We add lineHeight to the top to get the baseline for the first line.
             context.fillText(lines[i], x, topOfTextBlock + (i + 1) * lineHeight);
         }
     }
@@ -2141,8 +2234,8 @@ function drawFramesAndDetails() {
                 }
                 const totalPixels = canvasWidth * canvasHeight;
                 const density = drawnPixels / totalPixels;
-                if (request.detail === 'dense') return density > 0.20; // 20% filled
-                if (request.detail === 'minimal') return density < 0.08; // 8% filled
+                if (request.detail === 'dense') return density > 0.20;
+                if (request.detail === 'minimal') return density < 0.08;
                 break;
             case 'color':
                 const colorIndexMap = {'#00ffff': 0, '#ff00ff': 2, '#ffc300': 3};
@@ -2156,7 +2249,7 @@ function drawFramesAndDetails() {
                 return false; 
         }
 
-        return false; // Default
+        return false;
     }
 
     function isZoneEmpty(imageDataObject, zone) {
@@ -2178,28 +2271,30 @@ function drawFramesAndDetails() {
             for (let x = startX; x < endX; x++) {
                 const i = (y * width + x) * 4;
                 const alpha = data[i + 3];
-                // Check if pixel is not fully transparent and not the background color
                 if (alpha > 0 && (data[i] !== 240 || data[i+1] !== 240 || data[i+2] !== 240)) {
-                    return false; // Found a drawn pixel
+                    return false;
                 }
             }
         }
-        return true; // Zone is empty
+        return true;
     }
 
 
-    async function showLeaderboard(listElement, newScoreData) {
+    async function showLeaderboard(listElement) {
         if (!scoresCollectionRef) return;
-        const q = query(scoresCollectionRef, orderBy("score", "desc"), limit(10));
-        const querySnapshot = await getDocs(q);
+        const querySnapshot = await getDocs(scoresCollectionRef);
+        
+        const scores = querySnapshot.docs.map(doc => ({...doc.data(), id: doc.id}));
+        scores.sort((a, b) => b.score - a.score);
+        const topTen = scores.slice(0, 10);
+        
         listElement.innerHTML = '';
         
         let scoreCount = 0;
-        querySnapshot.forEach(doc => {
-            const data = doc.data();
+        topTen.forEach(data => {
             const li = document.createElement('li');
             li.textContent = `${data.name}: ${data.score}`;
-            if (newScoreData && data.timestamp && data.timestamp.toMillis() === newScoreData.timestamp.getTime()) {
+            if (newlySubmittedScoreTimestamp && data.timestamp && data.timestamp.toMillis() === newlySubmittedScoreTimestamp) {
                 li.classList.add('highlight');
             }
             listElement.appendChild(li);
@@ -2215,10 +2310,34 @@ function drawFramesAndDetails() {
         leaderboardContainer.style.display = 'flex';
     }
 
+    function updatePodium(topThree) {
+        const frameSpots = [
+            { img: document.getElementById('frame-img-1'), name: document.getElementById('frame-name-1'), score: document.getElementById('frame-score-1') },
+            { img: document.getElementById('frame-img-2'), name: document.getElementById('frame-name-2'), score: document.getElementById('frame-score-2') },
+            { img: document.getElementById('frame-img-3'), name: document.getElementById('frame-name-3'), score: document.getElementById('frame-score-3') }
+        ];
+        
+        const placeholderImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAAAUklEQVR42mP8/5+BggAX/x/AwMvLCwMDw/Dw8A8MDPh/M/y/Gf5/hv8f8P8H/H8A/w/8/wP+f0D/H6B/A/2/Af2/Af0/oP8H9P8A/T8gAADT9yH8e0f1xAAAAABJRU5ErkJggg==';
+
+        const sortedTopThree = [...topThree].sort((a, b) => b.score - a.score);
+
+        for(let i = 0; i < 3; i++) {
+            const data = sortedTopThree[i];
+            if (data && data.drawing && data.score > 0) {
+                frameSpots[i].img.src = data.drawing;
+                frameSpots[i].name.textContent = `${i + 1}. ${data.name}`;
+                frameSpots[i].score.textContent = data.score;
+            } else {
+                frameSpots[i].img.src = placeholderImage;
+                frameSpots[i].name.textContent = `${i + 1}. DVA`;
+                frameSpots[i].score.textContent = data ? data.score : '0';
+            }
+        }
+    }
+
     // --- Event Listeners ---
     function handleFirstKeyPress() {
         instructionMessageEl.style.display = 'none';
-        // drawHereMessageEl is now handled by the mouse listener
         window.removeEventListener('keydown', handleFirstKeyPress);
     }
     
@@ -2227,22 +2346,65 @@ function drawFramesAndDetails() {
         if (e.code === 'Space') { e.preventDefault(); dropDesign(); }
     });
     window.addEventListener('keyup', (e) => { keys[e.key] = false; });
-    restartButton.addEventListener('click', () => { init(); });
+    restartButton.addEventListener('click', () => { 
+        newlySubmittedScoreTimestamp = null;
+        init(); 
+    });
     submitScoreButton.addEventListener('click', async () => {
+        if (submitScoreButton.disabled) return;
+
         const newName = initialsInput.value.substring(0, 3).toUpperCase() || 'AAA';
-        const newScoreTimestamp = new Date();
+        localStorage.setItem('designersVsAiInitials', newName);
+        
+        let topScores = [];
+        if (scoresCollectionRef) {
+            try {
+                const scoresSnapshot = await getDocs(scoresCollectionRef);
+                topScores = scoresSnapshot.docs.map(doc => doc.data().score);
+                topScores.sort((a, b) => b - a);
+            } catch (e) {
+                console.error("Error getting scores for validation:", e);
+            }
+        }
+        const isTopThree = score > 0 && (topScores.length < 3 || score > topScores[2]);
+
+        if (isTopThree && !selectedPortfolioImage) {
+             selectDrawingPrompt.innerHTML = '<p style="font-size: 12px; color: #ff4141;">Please select a drawing first!</p>';
+             return;
+        }
+
+        submitScoreButton.disabled = true;
+        submitScoreButton.textContent = 'Submitting...';
+        
+        const timestamp = new Date();
+        newlySubmittedScoreTimestamp = timestamp.getTime();
+
         const newScore = {
             score: score,
             name: newName,
-            timestamp: newScoreTimestamp,
+            timestamp: timestamp,
+            drawing: selectedPortfolioImage
         };
+        
         if (scoresCollectionRef) {
-            await addDoc(scoresCollectionRef, newScore);
+            try {
+                await addDoc(scoresCollectionRef, newScore);
+                scoreSubmitted = true;
+                portfolioContainer.classList.remove('podium-selection-active');
+                messageTextEl.innerHTML = "GAME OVER! THE CLIENTS DISCOVERED AI";
+                selectDrawingPrompt.style.display = 'none';
+                await showLeaderboard(leaderboardList);
+            } catch (error) {
+                console.error("Error adding document: ", error);
+                leaderboardList.innerHTML = '<li>Error submitting score</li>';
+            }
         }
+        
         highscoreInputContainer.style.display = 'none';
         portfolioContainer.style.display = 'flex';
         restartButton.style.display = 'block';
-        await showLeaderboard(leaderboardList, newScore);
+        submitScoreButton.disabled = false;
+        submitScoreButton.textContent = 'Submit';
     });
 
     muteButton.addEventListener('click', () => {
@@ -2272,130 +2434,3 @@ function drawFramesAndDetails() {
                 restockMessageEl.style.display = 'block';
                 hasShownFirstRestockMessage = true;
                 setTimeout(() => {
-                    restockMessageEl.style.display = 'none';
-                }, 3000);
-            }
-        }
-    });
-
-    function getMousePos(canvas, evt) {
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        return { 
-            x: (evt.clientX - rect.left) * scaleX, 
-            y: (evt.clientY - rect.top) * scaleY
-        };
-    }
-    drawingCanvas.addEventListener('mousedown', (e) => { 
-        isDrawing = true; 
-        lastPoint = getMousePos(drawingCanvas, e); 
-        drawHereMessageEl.style.display='none'; 
-        usedColorsInCurrentDrawing.add(currentInkColorIndex);
-    });
-    drawingCanvas.addEventListener('mousemove', (e) => {
-        if (!isDrawing) return;
-        const currentPoint = getMousePos(drawingCanvas, e);
-        drawingCtx.beginPath();
-        drawingCtx.moveTo(lastPoint.x, lastPoint.y);
-        drawingCtx.lineTo(currentPoint.x, currentPoint.y);
-        drawingCtx.stroke();
-        lastPoint = currentPoint;
-    });
-    drawingCanvas.addEventListener('mouseup', () => { isDrawing = false; });
-    drawingCanvas.addEventListener('mouseleave', () => { isDrawing = false; });
-    
-    // --- Canvas Resizing ---
-    function resizeCanvas() {
-        const containerRect = gameContainer.getBoundingClientRect();
-        gameCanvas.width = containerRect.width;
-        gameCanvas.height = containerRect.height;
-        
-        const scale = gameCanvas.width / INTERNAL_WIDTH;
-        uiScaler.style.transform = `scale(${scale})`;
-    }
-    window.addEventListener('resize', resizeCanvas);
-
-    // --- Start Screen Animation ---
-    let startScreenAnimationId;
-    function animateStartScreen() {
-        const rect = startScreenCanvas.getBoundingClientRect();
-        startScreenCanvas.width = rect.width;
-        startScreenCanvas.height = rect.height;
-
-        startScreenCtx.clearRect(0, 0, startScreenCanvas.width, startScreenCanvas.height);
-        startScreenCtx.strokeStyle = 'rgba(174,194,224,0.5)';
-        startScreenCtx.lineWidth = 1;
-        startScreenCtx.lineCap = 'round';
-
-        startScreenRaindrops.forEach(r => {
-            r.y += r.speed;
-            if (r.y > startScreenCanvas.height) {
-                r.y = -r.length;
-                r.x = Math.random() * startScreenCanvas.width;
-            }
-            startScreenCtx.beginPath();
-            startScreenCtx.moveTo(r.x, r.y);
-            startScreenCtx.lineTo(r.x, r.y + r.length);
-            startScreenCtx.stroke();
-        });
-
-        startScreenAnimationId = requestAnimationFrame(animateStartScreen);
-    }
-
-    // --- Initial Start ---
-    startScreen.addEventListener('click', async (e) => {
-        if (!isGameLoaded) return;
-
-        if (!sound.isStarted) {
-            await Tone.start();
-            sound.isStarted = true;
-        }
-        cancelAnimationFrame(startScreenAnimationId);
-        startScreen.style.display = 'none';
-        sound.rain.start();
-        if (Tone.Transport.state !== 'started') {
-            Tone.Transport.start();
-        }
-        init();
-    });
-
-    // --- Setup on Load ---
-    for (let i = 0; i < 400; i++) {
-        startScreenRaindrops.push({
-            x: Math.random() * window.innerWidth,
-            y: Math.random() * window.innerHeight,
-            length: Math.random() * 20 + 10,
-            speed: Math.random() * 5 + 2
-        });
-    }
-    animateStartScreen();
-    setupFirebase();
-    resizeCanvas(); // Initial call to set the UI scale
-
-    const imageLoadPromise = new Promise((resolve) => {
-        if (startScreenImage.complete) {
-            resolve();
-        } else {
-            startScreenImage.onload = () => {
-                resolve();
-            };
-            startScreenImage.onerror = () => {
-                console.error("Failed to load start screen image.");
-                resolve(); // Resolve anyway so the game doesn't hang
-            };
-        }
-    });
-
-    Promise.all([imageLoadPromise, Tone.loaded(), scoresLoadedPromise]).then(() => {
-        isGameLoaded = true;
-        startScreen.style.backgroundImage = `url('${startScreenImage.src}')`;
-        startScreenLeaderboardEl.style.opacity = 1;
-        loadingContainer.style.display = 'none';
-        startPromptEl.style.display = 'block';
-        startScreen.classList.add('loaded');
-    });
-
-</script>
-</body>
-</html>
