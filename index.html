@@ -746,7 +746,7 @@
     const selectDrawingPrompt = document.getElementById('select-drawing-prompt');
     const viewGalleryButton = document.getElementById('view-gallery-button');
 
-     // --- Firebase Setup ---
+    // --- Firebase Setup ---
     let db, auth, scoresCollectionRef;
     const appId = 'designers-vs-ai-live';
     
@@ -770,61 +770,11 @@
             db = getFirestore(app);
             auth = getAuth(app);
             await signInAnonymously(auth);
-
             scoresCollectionRef = collection(db, `scores`);
-
-            onSnapshot(scoresCollectionRef, (querySnapshot) => {
-                const scores = querySnapshot.docs.map(doc => doc.data());
-                scores.sort((a, b) => b.score - a.score);
-                const topTenScores = scores.slice(0, 10);
-
-                if (topTenScores.length > 0) {
-                    const topDoc = topTenScores[0];
-                    topScore = topDoc.score;
-                    topScoreName = topDoc.name;
-                } else {
-                    topScore = 0;
-                    topScoreName = 'AI';
-                }
-                
-                updatePodium(topTenScores.slice(0, 3));
-                
-                startScreenListEl.innerHTML = '';
-                
-                let scoreCount = 0;
-                if(topTenScores.length > 0) {
-                    topTenScores.forEach(data => {
-                        const li = document.createElement('li');
-                        li.textContent = `${data.name}: ${data.score}`;
-                        startScreenListEl.appendChild(li);
-                        scoreCount++;
-                    });
-                }
-                
-                for (let i = scoreCount; i < 10; i++) {
-                    const li = document.createElement('li');
-                    li.textContent = `DVA: 0`;
-                    startScreenListEl.appendChild(li);
-                }
-
-
-                updateUI();
-                if (scoresLoadedResolve) {
-                    scoresLoadedResolve();
-                    scoresLoadedResolve = null; 
-                }
-            }, (error) => {
-                console.error("Error with snapshot listener:", error);
-                startScreenListEl.innerHTML = '<li>Error loading scores</li>';
-                if (scoresLoadedResolve) {
-                    scoresLoadedResolve();
-                    scoresLoadedResolve = null;
-                }
-            });
-
+            await fetchAndDisplayGallery(); // Fetch scores once on load
         } catch (error) {
-            console.error("Error initializing Firebase:", error);
-            startScreenListEl.innerHTML = '<li>Error loading scores</li>';
+            console.error("Error initializing or fetching from Firebase:", error);
+        } finally {
             if (scoresLoadedResolve) {
                 scoresLoadedResolve();
                 scoresLoadedResolve = null;
@@ -832,6 +782,27 @@
         }
     }
 
+    async function fetchAndDisplayGallery() {
+        if (!scoresCollectionRef) return;
+        try {
+            const q = query(scoresCollectionRef, orderBy("score", "desc"), limit(10));
+            const querySnapshot = await getDocs(q);
+            const scores = querySnapshot.docs.map(doc => doc.data());
+            
+            if (scores.length > 0) {
+                topScore = scores[0].score;
+                topScoreName = scores[0].name;
+            } else {
+                topScore = 0;
+                topScoreName = 'AI';
+            }
+            
+            updateTop10Gallery(scores);
+            updateUI();
+        } catch (error) {
+            console.error("Error fetching gallery scores:", error);
+        }
+    }
 
 
     // --- Sound Engine ---
@@ -2493,7 +2464,7 @@
         }
     });
 
-      function getMousePos(canvas, evt) {
+    function getMousePos(canvas, evt) {
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width;
         const scaleY = canvas.height / rect.height;
@@ -2520,9 +2491,9 @@
         
         const velocity = timeDelta > 0 ? distance / timeDelta : 0;
 
-        const maxLineWidth = 12;
-        const minLineWidth = 0.5;
-        const targetLineWidth = Math.max(minLineWidth, maxLineWidth - velocity * 4);
+        const maxLineWidth = 11;
+        const minLineWidth = 4;
+        const targetLineWidth = Math.max(minLineWidth, maxLineWidth - velocity * 9);
 
         const smoothedLineWidth = lastLineWidth * 0.6 + targetLineWidth * 0.4;
 
