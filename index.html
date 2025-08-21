@@ -227,7 +227,7 @@
         }
 
         #restock-message {
-            top: 35%;
+            top: 28%;
             left: 8%;
             transform: translate(-50%, -50%);
         }
@@ -292,11 +292,11 @@
             font-size: 12px;
             color: #00ffcc;
             border: 2px solid #00ffcc;
-            padding: 16px 16px 12px 16px;
+            padding: 16px;
             background: rgba(0,0,0,0.6);
-            width: 400px;
+            width: 550px; /* SHRUNK */
             text-align: center;
-            margin-top: 260px;
+            margin-top: 250px; /* MOVED DOWN */
             opacity: 0;
             transition: opacity 0.5s ease-in-out;
             display: flex;
@@ -307,10 +307,77 @@
             margin-bottom: 15px;
             text-decoration: underline;
         }
-        #start-screen-leaderboard .leaderboard-ol {
-            column-count: 2;
-            column-gap: 20px;
+        #top-10-gallery {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px; /* SHRUNK */
+            width: 100%;
         }
+        .gallery-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+        }
+        .gallery-item {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background: #222;
+        }
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border: 2px solid #00ffcc;
+        }
+        .img-gold { border-color: #FFD700!important; box-shadow: 0 0 8px #FFD700; }
+        .img-silver { border-color: #C0C0C0!important; box-shadow: 0 0 8px #C0C0C0; }
+        .img-bronze { border-color: #CD7F32!important; box-shadow: 0 0 8px #CD7F32; }
+
+        .gallery-plaque {
+            width: 100%;
+            background: #111;
+            border: 2px solid #00ffcc;
+            border-top: 0;
+            box-shadow: 0 0 8px rgba(0, 255, 204, 0.5);
+            display: flex;
+            align-items: stretch;
+            height: 35px; /* SHRUNK */
+        }
+        .plaque-rank {
+            flex: 1 1 33.33%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px; /* SHRUNK */
+            border-right: 2px solid #00ffcc;
+            color: #fff;
+            text-shadow: 0 0 5px #fff;
+            padding: 2px 4px 0 6px;
+        }
+        .plaque-info {
+            flex: 1 1 66.67%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 9px; /* SHRUNK */
+            padding: 0 5px;
+            color: #00ffcc;
+            text-shadow: 0 0 5px #00ffcc;
+        }
+        .plaque-gold { border-color: #FFD700; box-shadow: 0 0 10px #FFD700; }
+        .plaque-gold .plaque-rank { border-right-color: #FFD700; color: #FFD700; text-shadow: 0 0 8px #FFD700; }
+        .plaque-gold .plaque-info { color: #FFD700; text-shadow: 0 0 8px #FFD700; }
+
+        .plaque-silver { border-color: #C0C0C0; box-shadow: 0 0 10px #C0C0C0; }
+        .plaque-silver .plaque-rank { border-right-color: #C0C0C0; color: #C0C0C0; text-shadow: 0 0 8px #C0C0C0; }
+        .plaque-silver .plaque-info { color: #C0C0C0; text-shadow: 0 0 8px #C0C0C0; }
+
+        .plaque-bronze { border-color: #CD7F32; box-shadow: 0 0 10px #CD7F32; }
+        .plaque-bronze .plaque-rank { border-right-color: #CD7F32; color: #CD7F32; text-shadow: 0 0 8px #CD7F32; }
+        .plaque-bronze .plaque-info { color: #CD7F32; text-shadow: 0 0 8px #CD7F32; }
+
         #start-prompt-area {
             height: 50px;
             display: flex;
@@ -474,7 +541,7 @@
             display: none; /* Hidden by default */
         }
 
-        #message-box button, #highscore-input-container button {
+        #message-box button, #highscore-input-container button, #leaderboard-container button {
             background-color: #ff4141;
             color: #fff;
             padding: 10px 20px;
@@ -484,6 +551,19 @@
             font-family: 'Press Start 2P', cursive;
             font-size: 16px;
         }
+
+        #leaderboard-container button {
+            background-color: #00ffcc;
+            color: #111;
+            font-size: 14px;
+            margin-top: 15px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        #leaderboard-container button:hover {
+            background-color: #fff;
+            color: #000;
+        }
+
         #highscore-input-container { color: #00ffcc; }
         #initials-input {
             background: #222;
@@ -511,35 +591,6 @@
             align-items: center;
             z-index: 102; /* Ensure it's above the game over screen */
         }
-        #top-frames-container {
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            gap: 15px;
-            margin-bottom: 20px;
-            width: 100%;
-        }
-        .frame-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-        }
-        .frame-item img {
-            background: #222;
-            padding: 2px;
-        }
-        .frame-name {
-            font-size: 10px;
-            color: #fff;
-        }
-        .frame-score {
-            font-size: 8px;
-            color: #00ffcc;
-        }
-        #frame-img-1 { width: 70px; height: 70px; border: 1px solid #FFD700; box-shadow: 0 0 15px #FFD700; }
-        #frame-img-2 { width: 70px; height: 70px; border: 1px solid #C0C0C0; box-shadow: 0 0 10px #C0C0C0; }
-        #frame-img-3 { width: 70px; height: 70px; border: 1px solid #CD7F32; box-shadow: 0 0 10px #CD7F32; }
     </style>
 </head>
 <body>
@@ -577,7 +628,7 @@
         </div>
         <div id="instruction-message" class="game-message">Move with A & D<br>Press SPACE to drop your design</div>
         <div id="draw-here-message" class="game-message">&lt;-- DRAW HERE</div>
-        <div id="restock-message" class="game-message">Restock<br>paper!</div>
+        <div id="restock-message" class="game-message">Run here<br>to restock<br>paper</div>
         <div id="windy-message" class="game-message">It's getting windy!</div>
         <div id="lukewarm-message" class="game-message">Try filling more of the page for a<br>better client reaction, and more points!</div>
         <div id="special-request-message" class="game-message">Deliver client requests (<span style="color: #ffff00;">yellow text</span>)<br>or risk pushing them towards AI</div>
@@ -586,7 +637,7 @@
             <div id="message-box">
                 <div id="message-text">GAME OVER</div>
                 <div id="select-drawing-prompt" style="display: none;">
-                    <h3>New Top 3 Score!</h3>
+                    <h3>New Top 10 Score!</h3>
                     <p>Select a drawing to represent you</p>
                 </div>
                 <div id="portfolio-container" style="display: none;">
@@ -603,31 +654,17 @@
             <div id="leaderboard-container" style="display: none;">
                     <h3>HI-SCORES</h3>
                     <ol id="leaderboard-list" class="leaderboard-ol"></ol>
+                    <button id="view-gallery-button">View Gallery</button>
             </div>
         </div>
         <div id="start-screen">
             <canvas id="start-screen-canvas"></canvas>
             <div id="start-screen-ui">
                 <div id="start-screen-leaderboard">
-                    <h3>HI-SCORES</h3>
-                    <div id="top-frames-container">
-                        <div class="frame-item" id="frame-item-2">
-                            <img id="frame-img-2" src="">
-                            <div id="frame-name-2" class="frame-name">2. ---</div>
-                            <div id="frame-score-2" class="frame-score">0</div>
-                        </div>
-                        <div class="frame-item" id="frame-item-1">
-                            <img id="frame-img-1" src="">
-                            <div id="frame-name-1" class="frame-name">1. ---</div>
-                            <div id="frame-score-1" class="frame-score">0</div>
-                        </div>
-                        <div class="frame-item" id="frame-item-3">
-                            <img id="frame-img-3" src="">
-                            <div id="frame-name-3" class="frame-name">3. ---</div>
-                            <div id="frame-score-3" class="frame-score">0</div>
-                        </div>
+                    <h3>HI-SCORE HALL OF FAME</h3>
+                    <div id="top-10-gallery">
+                        <!-- Gallery items will be populated by JS -->
                     </div>
-                    <ol id="start-screen-list" class="leaderboard-ol"></ol>
                 </div>
                 <div id="start-prompt-area">
                     <div id="loading-container">
@@ -648,7 +685,7 @@
     // --- Firebase Imports ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, collection, onSnapshot, addDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, serverTimestamp, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     // --- Canvas and Context Setup ---
     const gameCanvas = document.getElementById('game-canvas');
@@ -691,7 +728,6 @@
     const submitScoreButton = document.getElementById('submit-score-button');
     const startScreen = document.getElementById('start-screen');
     const startScreenLeaderboardEl = document.getElementById('start-screen-leaderboard');
-    const startScreenListEl = document.getElementById('start-screen-list');
     const startPromptEl = document.getElementById('start-prompt');
     const loadingContainer = document.getElementById('loading-container');
     const muteButton = document.getElementById('mute-button');
@@ -708,8 +744,9 @@
     const specialRequestMessageEl = document.getElementById('special-request-message');
     const trashIcon = document.getElementById('trash-icon');
     const selectDrawingPrompt = document.getElementById('select-drawing-prompt');
+    const viewGalleryButton = document.getElementById('view-gallery-button');
 
-    // --- Firebase Setup ---
+     // --- Firebase Setup ---
     let db, auth, scoresCollectionRef;
     const appId = 'designers-vs-ai-live';
     
@@ -796,6 +833,7 @@
     }
 
 
+
     // --- Sound Engine ---
     const reverb = new Tone.Freeverb(0.7, 3000).toDestination();
     const sound = {
@@ -842,7 +880,6 @@
     let keys = {}, isDrawing = false;
     let lastPoint, lastSpawnTime = 0, parallaxOffset = 0, gameTime = 0;
     let paperCount = 3;
-    let hasShownFirstRestockMessage = false;
     let hasShownSpecialRequestMessage = false;
     let hasShownLukewarmMessage = false;
     let totalClientsSpawned = 0;
@@ -1062,12 +1099,12 @@
     }
 
     class Client {
-        constructor(y, speed) {
+        constructor(y, speed, isSwarmClient = false) {
             this.width = CLIENT_WIDTH; this.height = CLIENT_HEIGHT;
             this.x = -this.width; this.y = y; this.speed = speed;
             this.isCaught = false; this.isAngry = false;
             this.isInvestigating = false;
-            this.isSwarming = false;
+            this.isSwarming = isSwarmClient;
             this.hasReachedAI = false;
             this.caughtDesignImage = null; this.walkBob = 0;
             this.feedbackQuote = '';
@@ -1093,28 +1130,36 @@
             this.targetX = this.x;
             this.moveTimer = 0;
 
-            if (totalClientsSpawned === 3 || (totalClientsSpawned > 3 && totalClientsSpawned % 3 === 0)) {
-                let availableRequests = specialRequestTypes;
-                if (totalClientsSpawned < 10) {
-                    availableRequests = specialRequestTypes.filter(req => req.type !== 'impossible');
+            if (isSwarmClient) {
+                if (Math.random() < 1 / 6) { // 1 in 6 chance for a crown
+                    this.specialRequest = { type: 'crown' }; // Simple object to trigger crown drawing
                 }
-                let newRequest;
-                do {
-                    newRequest = availableRequests[Math.floor(Math.random() * availableRequests.length)];
-                } while (newRequest.type === lastSpecialRequestType);
-                this.specialRequest = newRequest;
-                lastSpecialRequestType = this.specialRequest.type;
-                this.quote = this.specialRequest.text;
+                this.quote = "";
+                this.quoteVisible = false;
             } else {
-                if (availableQuotes.length === 0) availableQuotes = [...clientQuotes];
-                const quoteIndex = Math.floor(Math.random() * availableQuotes.length);
-                this.quote = availableQuotes.splice(quoteIndex, 1)[0];
+                if (totalClientsSpawned === 3 || (totalClientsSpawned > 3 && totalClientsSpawned % 3 === 0)) {
+                    let availableRequests = specialRequestTypes;
+                    if (totalClientsSpawned < 10) {
+                        availableRequests = specialRequestTypes.filter(req => req.type !== 'impossible');
+                    }
+                    let newRequest;
+                    do {
+                        newRequest = availableRequests[Math.floor(Math.random() * availableRequests.length)];
+                    } while (newRequest.type === lastSpecialRequestType);
+                    this.specialRequest = newRequest;
+                    lastSpecialRequestType = this.specialRequest.type;
+                    this.quote = this.specialRequest.text;
+                } else {
+                    if (availableQuotes.length === 0) availableQuotes = [...clientQuotes];
+                    const quoteIndex = Math.floor(Math.random() * availableQuotes.length);
+                    this.quote = availableQuotes.splice(quoteIndex, 1)[0];
+                }
+                this.quoteVisible = true;
+                if (this.specialRequest && sound.isStarted) {
+                    sound.specialRequest.triggerAttackRelease("C6", "8n");
+                }
+                speak(this.quote, this.voicePitch, this.voiceRate, this.voice);
             }
-            this.quoteVisible = true;
-            if (this.specialRequest && sound.isStarted) {
-                sound.specialRequest.triggerAttackRelease("C6", "8n");
-            }
-            speak(this.quote, this.voicePitch, this.voiceRate, this.voice);
         }
         
         update(time) {
@@ -1424,7 +1469,6 @@
         lastSpawnTime = 0; parallaxOffset = 0; gameTime = 0;
         availableQuotes = [...clientQuotes];
         paperCount = 3;
-        hasShownFirstRestockMessage = false;
         hasShownSpecialRequestMessage = false;
         hasShownLukewarmMessage = false;
         popupQueue = [];
@@ -1488,6 +1532,7 @@
 
         instructionMessageEl.style.display = 'block';
         drawHereMessageEl.style.display = 'block';
+        restockMessageEl.style.display = 'none';
         window.addEventListener('keydown', handleFirstKeyPress, { once: true });
         
         if (!animationFrameId) gameLoop(0);
@@ -1516,9 +1561,8 @@
 
     function manageSwarm(time) {
         if (time - lastSpawnTime > 200) {
-            const swarmClient = new Client(INTERNAL_HEIGHT - CLIENT_HEIGHT - 14, 1.5 + Math.random());
+            const swarmClient = new Client(INTERNAL_HEIGHT - CLIENT_HEIGHT - 14, 1.5 + Math.random(), true);
             swarmClient.x = -swarmClient.width - Math.random() * 200;
-            swarmClient.isSwarming = true;
             clients.push(swarmClient);
             lastSpawnTime = time;
         }
@@ -1547,6 +1591,9 @@
         }
 
         if (!isGameOver) {
+            if (paperCount <= 0) {
+                restockMessageEl.style.display = 'block';
+            }
             manageClients(time);
             designer.update(time);
             checkCollisions(time);
@@ -1981,12 +2028,11 @@
     async function showGameOverScreen() {
         let topScores = [];
         if (scoresCollectionRef) {
-            const scoresSnapshot = await getDocs(scoresCollectionRef);
+            const q = query(scoresCollectionRef, orderBy("score", "desc"), limit(10));
+            const scoresSnapshot = await getDocs(q);
             topScores = scoresSnapshot.docs.map(doc => doc.data().score);
-            topScores.sort((a, b) => b - a);
         }
         
-        const isTopThree = score > 0 && (topScores.length < 3 || score > topScores[2]);
         const isTopTen = score > 0 && (topScores.length < 10 || score > topScores[9]);
 
         const savedInitials = localStorage.getItem('designersVsAiInitials');
@@ -1996,7 +2042,7 @@
 
         portfolioImagesContainer.innerHTML = '';
 
-        if (isTopThree && successfulDesigns.length > 0) {
+        if (isTopTen && successfulDesigns.length > 0) {
             selectedPortfolioImage = successfulDesigns[0].src;
             portfolioContainer.classList.add('podium-selection-active');
         } else {
@@ -2008,13 +2054,13 @@
             const div = document.createElement('div');
             div.className = 'portfolio-item';
 
-            if (isTopThree && isFirstItem) {
+            if (isTopTen && isFirstItem) {
                 div.classList.add('selected');
                 isFirstItem = false;
             }
             
             div.onclick = () => {
-                if (!scoreSubmitted && isTopThree) {
+                if (!scoreSubmitted && isTopTen) {
                     document.querySelectorAll('.portfolio-item').forEach(el => el.classList.remove('selected'));
                     div.classList.add('selected');
                     selectedPortfolioImage = design.src;
@@ -2044,20 +2090,12 @@
             portfolioImagesContainer.appendChild(div);
         });
 
-        if (isTopThree) {
+        if (isTopTen) {
             messageTextEl.innerHTML = "GAME OVER! THE CLIENTS DISCOVERED AI";
             selectDrawingPrompt.style.display = 'block';
             portfolioContainer.style.display = 'flex';
             highscoreInputContainer.style.display = 'block';
             restartButton.style.display = 'none';
-        } else if (isTopTen) {
-            messageTextEl.innerHTML = "GAME OVER!<br>NEW HIGH SCORE!";
-            selectDrawingPrompt.style.display = 'none';
-            portfolioContainer.style.display = 'flex';
-            portfolioContainer.classList.remove('podium-selection-active');
-            highscoreInputContainer.style.display = 'block';
-            restartButton.style.display = 'none';
-            selectedPortfolioImage = null;
         } else {
             messageTextEl.innerHTML = "GAME OVER<br>THE CLIENTS HAVE FIGURED OUT AI";
             highscoreInputContainer.style.display = 'none';
@@ -2119,16 +2157,7 @@
         if (isGameOver) return;
         
         if (paperCount <= 0) {
-            if (!hasShownFirstRestockMessage) {
-                if(sound.isStarted) sound.outOfPaper.triggerAttackRelease("A2", "16n");
-                restockMessageEl.style.display = 'block';
-                hasShownFirstRestockMessage = true;
-                setTimeout(() => {
-                    restockMessageEl.style.display = 'none';
-                }, 3000);
-            } else {
-                 if(sound.isStarted) sound.outOfPaper.triggerAttackRelease("A2", "16n");
-            }
+            if(sound.isStarted) sound.outOfPaper.triggerAttackRelease("A2", "16n");
             return;
         }
         
@@ -2156,14 +2185,6 @@
                     projectiles.push(projectile);
                     paperCount--;
                     updatePaperStackUI();
-                    if (paperCount === 0 && !hasShownFirstRestockMessage) {
-                        if(sound.isStarted) sound.outOfPaper.triggerAttackRelease("A2", "16n");
-                        restockMessageEl.style.display = 'block';
-                        hasShownFirstRestockMessage = true;
-                        setTimeout(() => {
-                            restockMessageEl.style.display = 'none';
-                        }, 3000);
-                    }
                     clearDrawing();
                 };
             } else if (!currentWindow.isUsable) {
@@ -2276,16 +2297,15 @@
 
     async function showLeaderboard(listElement) {
         if (!scoresCollectionRef) return;
-        const querySnapshot = await getDocs(scoresCollectionRef);
+        const q = query(scoresCollectionRef, orderBy("score", "desc"), limit(10));
+        const querySnapshot = await getDocs(q);
         
         const scores = querySnapshot.docs.map(doc => ({...doc.data(), id: doc.id}));
-        scores.sort((a, b) => b.score - a.score);
-        const topTen = scores.slice(0, 10);
         
         listElement.innerHTML = '';
         
         let scoreCount = 0;
-        topTen.forEach(data => {
+        scores.forEach(data => {
             const li = document.createElement('li');
             li.textContent = `${data.name}: ${data.score}`;
             if (newlySubmittedScoreTimestamp && data.timestamp && data.timestamp.toMillis() === newlySubmittedScoreTimestamp) {
@@ -2304,28 +2324,54 @@
         leaderboardContainer.style.display = 'flex';
     }
 
-    function updatePodium(topThree) {
-        const frameSpots = [
-            { img: document.getElementById('frame-img-1'), name: document.getElementById('frame-name-1'), score: document.getElementById('frame-score-1') },
-            { img: document.getElementById('frame-img-2'), name: document.getElementById('frame-name-2'), score: document.getElementById('frame-score-2') },
-            { img: document.getElementById('frame-img-3'), name: document.getElementById('frame-name-3'), score: document.getElementById('frame-score-3') }
-        ];
-        
+    function updateTop10Gallery(topTen) {
+        const galleryContainer = document.getElementById('top-10-gallery');
+        galleryContainer.innerHTML = ''; // Clear previous entries
         const placeholderImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAAAUklEQVR42mP8/5+BggAX/x/AwMvLCwMDw/Dw8A8MDPh/M/y/Gf5/hv8f8P8H/H8A/w/8/wP+f0D/H6B/A/2/Af2/Af0/oP8H9P8A/T8gAADT9yH8e0f1xAAAAABJRU5ErkJggg==';
 
-        const sortedTopThree = [...topThree].sort((a, b) => b.score - a.score);
+        for (let i = 0; i < 10; i++) {
+            const scoreData = topTen[i];
+            const rank = i + 1;
 
-        for(let i = 0; i < 3; i++) {
-            const data = sortedTopThree[i];
-            if (data && data.drawing && data.score > 0) {
-                frameSpots[i].img.src = data.drawing;
-                frameSpots[i].name.textContent = `${i + 1}. ${data.name}`;
-                frameSpots[i].score.textContent = data.score;
-            } else {
-                frameSpots[i].img.src = placeholderImage;
-                frameSpots[i].name.textContent = `${i + 1}. DVA`;
-                frameSpots[i].score.textContent = data ? data.score : '0';
-            }
+            const column = document.createElement('div');
+            column.className = 'gallery-column';
+
+            const item = document.createElement('div');
+            item.className = 'gallery-item';
+            
+            const img = document.createElement('img');
+            img.src = (scoreData && scoreData.drawing) ? scoreData.drawing : placeholderImage;
+            
+            // Add border classes for top 3 images
+            if (rank === 1) img.classList.add('img-gold');
+            else if (rank === 2) img.classList.add('img-silver');
+            else if (rank === 3) img.classList.add('img-bronze');
+
+            const plaque = document.createElement('div');
+            plaque.className = 'gallery-plaque';
+
+            // Add border classes for top 3
+            if (rank === 1) plaque.classList.add('plaque-gold');
+            else if (rank === 2) plaque.classList.add('plaque-silver');
+            else if (rank === 3) plaque.classList.add('plaque-bronze');
+
+            const rankDiv = document.createElement('div');
+            rankDiv.className = 'plaque-rank';
+            rankDiv.textContent = rank;
+
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'plaque-info';
+            
+            const name = (scoreData && scoreData.name) ? scoreData.name.trim() : 'DVA';
+            const score = (scoreData && scoreData.score) ? scoreData.score : '0';
+            infoDiv.textContent = `${name}: ${score}`;
+
+            plaque.appendChild(rankDiv);
+            plaque.appendChild(infoDiv);
+            item.appendChild(img);
+            column.appendChild(item);
+            column.appendChild(plaque);
+            galleryContainer.appendChild(column);
         }
     }
 
@@ -2344,25 +2390,47 @@
         newlySubmittedScoreTimestamp = null;
         init(); 
     });
+
+    function showStartScreen() {
+        gameOverWrapper.style.display = 'none';
+        startScreen.style.display = 'flex';
+        fetchAndDisplayGallery();
+        animateStartScreen();
+        gameOverMusicPlayer.stop();
+    }
+
+    viewGalleryButton.addEventListener('click', showStartScreen);
+
     submitScoreButton.addEventListener('click', async () => {
         if (submitScoreButton.disabled) return;
 
-        const newName = initialsInput.value.substring(0, 3).toUpperCase() || 'AAA';
-        localStorage.setItem('designersVsAiInitials', newName);
+        const newNameRaw = initialsInput.value.trim();
+        if (!newNameRaw) {
+            initialsInput.style.animation = 'shake 0.5s';
+            setTimeout(() => initialsInput.style.animation = '', 500);
+            return;
+        }
+
+        let newName = newNameRaw.substring(0, 3).toUpperCase();
+        if (newName.length < 3) {
+            newName = newName.padEnd(3, ' ');
+        }
+        
+        localStorage.setItem('designersVsAiInitials', newName.trim());
         
         let topScores = [];
         if (scoresCollectionRef) {
             try {
-                const scoresSnapshot = await getDocs(scoresCollectionRef);
+                const q = query(scoresCollectionRef, orderBy("score", "desc"), limit(10));
+                const scoresSnapshot = await getDocs(q);
                 topScores = scoresSnapshot.docs.map(doc => doc.data().score);
-                topScores.sort((a, b) => b - a);
             } catch (e) {
                 console.error("Error getting scores for validation:", e);
             }
         }
-        const isTopThree = score > 0 && (topScores.length < 3 || score > topScores[2]);
+        const isTopTen = score > 0 && (topScores.length < 10 || score > topScores[9]);
 
-        if (isTopThree && !selectedPortfolioImage) {
+        if (isTopTen && !selectedPortfolioImage) {
              selectDrawingPrompt.innerHTML = '<p style="font-size: 12px; color: #ff4141;">Please select a drawing first!</p>';
              return;
         }
@@ -2377,7 +2445,7 @@
             score: score,
             name: newName,
             timestamp: timestamp,
-            drawing: selectedPortfolioImage // This will be null for scores not in top 3
+            drawing: selectedPortfolioImage // This will be null for scores not in top 10
         };
         
         if (scoresCollectionRef) {
@@ -2422,19 +2490,10 @@
             paperCount--;
             updatePaperStackUI();
             clearDrawing();
-
-            if (paperCount === 0 && !hasShownFirstRestockMessage) {
-                if(sound.isStarted) sound.outOfPaper.triggerAttackRelease("A2", "16n");
-                restockMessageEl.style.display = 'block';
-                hasShownFirstRestockMessage = true;
-                setTimeout(() => {
-                    restockMessageEl.style.display = 'none';
-                }, 3000);
-            }
         }
     });
 
-    function getMousePos(canvas, evt) {
+      function getMousePos(canvas, evt) {
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width;
         const scaleY = canvas.height / rect.height;
