@@ -845,7 +845,7 @@
 
     // --- Game State and Configuration ---
     let designer, projectiles, ai;
-    let clients = [], raindrops = [], windows = [], successfulDesigns = [], vfxParticles = [], paperVFX = [];
+    let clients = [], raindrops = [], windows = [], successfulDesigns = [], vfxParticles = [], paperVFX = [], flies = [];
     let startScreenRaindrops = [];
     let score = 0, topScore = 0, topScoreName = 'AI';
     let isGameOver = false;
@@ -871,7 +871,11 @@
     let newlySubmittedScoreTimestamp = null;
     let lastPointTime = 0;
     let lastLineWidth = 3;
-
+// --- Neon Light Configuration ---
+    const NEON_SIGN_X = INTERNAL_WIDTH * 0.455;
+    const NEON_SIGN_Y = 400;
+    const NEON_SIGN_WIDTH = 395;
+    const NEON_SIGN_HEIGHT = 150;
 
     const inkColors = ['#00ffff', '#20c2a8', '#ff00ff', '#ffc300', '#ff7f50', '#0000ff', '#00ff00'];
     const pencilColors = {
@@ -1238,8 +1242,6 @@
                 internalCtx.fillRect(clientX + 8, clientY - 8, this.width - 16, 8);
             }
 
-            const NEON_SIGN_X = INTERNAL_WIDTH * 0.55;
-            const NEON_SIGN_WIDTH = 300;
             const clientCenterX = clientX + this.width / 2;
             const signCenterX = NEON_SIGN_X + NEON_SIGN_WIDTH / 2;
             const distanceToSign = Math.abs(clientCenterX - signCenterX);
@@ -1313,8 +1315,18 @@
                 internalCtx.drawImage(this.caughtDesignImage, paperX, paperY, 40, 40);
 
                 const paperCenterX = paperX + 20;
-                const paperDistanceToSign = Math.abs(paperCenterX - signCenterX);
-                const paperLightIntensity = Math.max(0, 1 - (paperDistanceToSign / lightFalloff));
+                const paperCenterY = paperY + 20;
+                const signCenterY = NEON_SIGN_Y + NEON_SIGN_HEIGHT / 2;
+
+                const dx = Math.abs(paperCenterX - signCenterX);
+                const dy = Math.abs(paperCenterY - signCenterY);
+
+                const normalizedDx = dx / (NEON_SIGN_WIDTH * 0.8);
+                const normalizedDy = dy / (NEON_SIGN_HEIGHT * 1.5); // Y has a larger falloff
+
+                const totalDistanceFactor = Math.sqrt(normalizedDx**2 + normalizedDy**2);
+                const paperLightIntensity = Math.max(0, 1 - totalDistanceFactor);
+
                 internalCtx.globalCompositeOperation = 'source-atop';
                 const pRedTint = 10 * paperLightIntensity;
                 const pBlueTint = 20 * (1 - paperLightIntensity);
@@ -1344,13 +1356,19 @@
             internalCtx.rotate(this.rotation);
             internalCtx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
 
-            const NEON_SIGN_X = INTERNAL_WIDTH * 0.55;
-            const NEON_SIGN_WIDTH = 300;
             const projectileCenterX = this.x + this.width / 2;
+            const projectileCenterY = this.y + this.height / 2;
             const signCenterX = NEON_SIGN_X + NEON_SIGN_WIDTH / 2;
-            const distanceToSign = Math.abs(projectileCenterX - signCenterX);
-            const lightFalloff = NEON_SIGN_WIDTH * 0.8;
-            const lightIntensity = Math.max(0, 1 - (distanceToSign / lightFalloff));
+            const signCenterY = NEON_SIGN_Y + NEON_SIGN_HEIGHT / 2;
+
+            const dx = Math.abs(projectileCenterX - signCenterX);
+            const dy = Math.abs(projectileCenterY - signCenterY);
+
+            const normalizedDx = dx / (NEON_SIGN_WIDTH * 0.8);
+            const normalizedDy = dy / (NEON_SIGN_HEIGHT * 1.5); // Y has a larger falloff
+
+            const totalDistanceFactor = Math.sqrt(normalizedDx**2 + normalizedDy**2);
+            const lightIntensity = Math.max(0, 1 - totalDistanceFactor);
 
             internalCtx.globalCompositeOperation = 'source-atop';
             const redTint = 10 * lightIntensity;
@@ -1437,7 +1455,7 @@
     function init() {
         isGameOver = false;
         score = 0;
-        projectiles = []; clients = []; raindrops = []; windows = []; successfulDesigns = []; vfxParticles = []; paperVFX = [];
+        projectiles = []; clients = []; raindrops = []; windows = []; successfulDesigns = []; vfxParticles = []; paperVFX = []; flies = [];
         lastSpawnTime = 0; parallaxOffset = 0; gameTime = 0;
         availableQuotes = [...clientQuotes];
         paperCount = 3;
@@ -1491,6 +1509,7 @@
             });
         }
         
+        setupFlies();
         updateUI();
         selectPencil(document.getElementById('pencil-cyan'));
         clearDrawing();
@@ -1508,6 +1527,20 @@
         window.addEventListener('keydown', handleFirstKeyPress, { once: true });
         
         if (!animationFrameId) gameLoop(0);
+    }
+
+    function setupFlies() {
+        for (let i = 0; i < 10; i++) {
+            flies.push({
+                x: NEON_SIGN_X + Math.random() * NEON_SIGN_WIDTH,
+                y: NEON_SIGN_Y + Math.random() * NEON_SIGN_HEIGHT,
+                vx: 0, vy: 0,
+                targetX: NEON_SIGN_X + Math.random() * NEON_SIGN_WIDTH,
+                targetY: NEON_SIGN_Y + Math.random() * NEON_SIGN_HEIGHT,
+                radius: Math.random() * 1.2 + 0.5,
+                timer: Math.random() * 100
+            });
+        }
     }
 
     function manageClients(time) {
@@ -1574,6 +1607,7 @@
         }
         
         ai.update();
+        updateFlies();
         
         windows.forEach(win => {
             if (!win.isUsable) return;
@@ -1637,6 +1671,30 @@
             }
             if (r.x > INTERNAL_WIDTH) r.x = 0;
             if (r.x < 0) r.x = INTERNAL_WIDTH;
+        });
+    }
+
+    function updateFlies() {
+        flies.forEach(fly => {
+            fly.timer--;
+            if (fly.timer <= 0) {
+                fly.targetX = NEON_SIGN_X + Math.random() * NEON_SIGN_WIDTH;
+                fly.targetY = NEON_SIGN_Y + Math.random() * NEON_SIGN_HEIGHT;
+                fly.timer = Math.random() * 60 + 30; // New target every 0.5-1.5 seconds
+            }
+
+            const dx = fly.targetX - fly.x;
+            const dy = fly.targetY - fly.y;
+            
+            fly.vx += dx * 0.005;
+            fly.vy += dy * 0.005;
+
+            // Damping
+            fly.vx *= 0.9;
+            fly.vy *= 0.9;
+
+            fly.x += fly.vx;
+            fly.y += fly.vy;
         });
     }
 
@@ -1888,6 +1946,27 @@
         });
     }
 
+    function drawFlies() {
+        internalCtx.save();
+        internalCtx.globalCompositeOperation = 'lighter';
+        flies.forEach(fly => {
+            const gradient = internalCtx.createRadialGradient(fly.x, fly.y, 0, fly.x, fly.y, fly.radius * 3);
+            gradient.addColorStop(0, 'rgba(255, 255, 200, 0.8)');
+            gradient.addColorStop(1, 'rgba(255, 255, 200, 0)');
+            
+            internalCtx.fillStyle = gradient;
+            internalCtx.beginPath();
+            internalCtx.arc(fly.x, fly.y, fly.radius * 3, 0, Math.PI * 2);
+            internalCtx.fill();
+            
+            internalCtx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            internalCtx.beginPath();
+            internalCtx.arc(fly.x, fly.y, fly.radius, 0, Math.PI * 2);
+            internalCtx.fill();
+        });
+        internalCtx.restore();
+    }
+
     function drawRain() {
         internalCtx.strokeStyle = 'rgba(174,194,224,0.5)';
         internalCtx.lineWidth = 1;
@@ -1909,6 +1988,7 @@
         clients.forEach(c => c.draw(gameTime));
         projectiles.forEach(p => p.draw());
         drawScoreVFX();
+        drawFlies();
         drawRain();
 
         gameCtx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
@@ -2465,7 +2545,7 @@
         }
     });
 
-    function getMousePos(canvas, evt) {
+ function getMousePos(canvas, evt) {
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width;
         const scaleY = canvas.height / rect.height;
@@ -2532,16 +2612,36 @@
         startScreenCtx.strokeStyle = 'rgba(174,194,224,0.5)';
         startScreenCtx.lineWidth = 1;
         startScreenCtx.lineCap = 'round';
+        
+        const centerX = startScreenCanvas.width / 2;
+        const perspectiveAmount = -0.03; 
 
         startScreenRaindrops.forEach(r => {
-            r.y += r.speed;
+            const perspectiveOffset = (r.x - centerX) * perspectiveAmount;
+            
+            const directionX = -perspectiveOffset;
+            const directionY = r.length;
+
+            const magnitude = Math.sqrt(directionX * directionX + directionY * directionY);
+
+            if (magnitude > 0) {
+                const normalizedX = directionX / magnitude;
+                const normalizedY = directionY / magnitude;
+
+                r.x += normalizedX * r.speed;
+                r.y += normalizedY * r.speed;
+            } else {
+                r.y += r.speed;
+            }
+
             if (r.y > startScreenCanvas.height) {
                 r.y = -r.length;
                 r.x = Math.random() * startScreenCanvas.width;
             }
+            
             startScreenCtx.beginPath();
             startScreenCtx.moveTo(r.x, r.y);
-            startScreenCtx.lineTo(r.x, r.y + r.length);
+            startScreenCtx.lineTo(r.x - perspectiveOffset, r.y + r.length);
             startScreenCtx.stroke();
         });
 
